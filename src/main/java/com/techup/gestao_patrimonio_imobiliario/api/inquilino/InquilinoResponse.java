@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.techup.gestao_patrimonio_imobiliario.core.endereco.Endereco;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusInquilino;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.TipoPessoa;
 import com.techup.gestao_patrimonio_imobiliario.core.inquilino.Inquilino;
@@ -24,6 +25,7 @@ public class InquilinoResponse {
     String email;
     String telefone;
     LocalDate dataNascimento;
+    Endereco endereco;
     String observacoes;
     StatusInquilino status;
     LocalDateTime dataCriacao;
@@ -41,6 +43,7 @@ public class InquilinoResponse {
                 .email(inquilino.getEmail())
                 .telefone(inquilino.getTelefone())
                 .dataNascimento(inquilino.getDataNascimento())
+                .endereco(inquilino.getEndereco())
                 .observacoes(inquilino.getObservacoes())
                 .status(inquilino.getStatus())
                 .dataCriacao(inquilino.getDataCriacao())

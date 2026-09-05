@@ -2,6 +2,7 @@ package com.techup.gestao_patrimonio_imobiliario.api.inquilino;
 
 import java.time.LocalDate;
 
+import com.techup.gestao_patrimonio_imobiliario.core.endereco.Endereco;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusInquilino;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.TipoPessoa;
 
@@ -30,6 +31,8 @@ public class InquilinoRequest {
     String telefone;
 
     LocalDate dataNascimento;
+
+    Endereco endereco;
 
     String observacoes;
 

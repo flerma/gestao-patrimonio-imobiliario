@@ -1,6 +1,7 @@
 package com.techup.gestao_patrimonio_imobiliario.data.inquilino;
 
 import com.techup.gestao_patrimonio_imobiliario.core.inquilino.Inquilino;
+import com.techup.gestao_patrimonio_imobiliario.data.endereco.EnderecoMapper;
 
 public final class InquilinoMapper {
 
@@ -19,6 +20,7 @@ public final class InquilinoMapper {
                 .email(inquilino.getEmail())
                 .telefone(inquilino.getTelefone())
                 .dataNascimento(inquilino.getDataNascimento())
+                .endereco(EnderecoMapper.toEmbeddable(inquilino.getEndereco()))
                 .observacoes(inquilino.getObservacoes())
                 .status(inquilino.getStatus())
                 .dataCriacao(inquilino.getDataCriacao())
@@ -38,6 +40,7 @@ public final class InquilinoMapper {
                 .email(entity.getEmail())
                 .telefone(entity.getTelefone())
                 .dataNascimento(entity.getDataNascimento())
+                .endereco(EnderecoMapper.toDomain(entity.getEndereco()))
                 .observacoes(entity.getObservacoes())
                 .status(entity.getStatus())
                 .dataCriacao(entity.getDataCriacao())

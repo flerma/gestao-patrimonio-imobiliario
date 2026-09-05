@@ -35,6 +35,7 @@ public class InquilinoService {
                 .email(request.getEmail())
                 .telefone(request.getTelefone())
                 .dataNascimento(request.getDataNascimento())
+                .endereco(request.getEndereco())
                 .observacoes(request.getObservacoes())
                 .status(request.getStatus() != null ? request.getStatus() : StatusInquilino.ATIVO)
                 .dataCriacao(agora)
@@ -67,6 +68,7 @@ public class InquilinoService {
                 .withEmail(request.getEmail())
                 .withTelefone(request.getTelefone())
                 .withDataNascimento(request.getDataNascimento())
+                .withEndereco(request.getEndereco())
                 .withObservacoes(request.getObservacoes())
                 .withStatus(request.getStatus() != null ? request.getStatus() : existente.getStatus())
                 .withDataAtualizacao(LocalDateTime.now());

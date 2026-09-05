@@ -8,5 +8,6 @@
     <include file="db/changelog/002-create-table-imoveis.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/003-create-table-inquilinos.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/004-create-table-contratos.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/005-add-endereco-to-inquilinos.sql" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

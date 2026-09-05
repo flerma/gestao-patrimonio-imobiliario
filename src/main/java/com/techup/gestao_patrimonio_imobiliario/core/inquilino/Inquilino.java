@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.techup.gestao_patrimonio_imobiliario.core.endereco.Endereco;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusInquilino;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.TipoPessoa;
 
@@ -25,6 +26,7 @@ public class Inquilino {
     String email;
     String telefone;
     LocalDate dataNascimento;
+    Endereco endereco;
     String observacoes;
     StatusInquilino status;
     LocalDateTime dataCriacao;

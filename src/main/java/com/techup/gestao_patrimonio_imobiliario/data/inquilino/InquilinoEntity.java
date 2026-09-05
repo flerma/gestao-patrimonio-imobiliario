@@ -6,8 +6,10 @@ import java.util.UUID;
 
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusInquilino;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.TipoPessoa;
+import com.techup.gestao_patrimonio_imobiliario.data.endereco.EnderecoEntity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -49,6 +51,9 @@ public class InquilinoEntity {
 
     @Column(name = "data_nascimento")
     private LocalDate dataNascimento;
+
+    @Embedded
+    private EnderecoEntity endereco;
 
     @Column(name = "observacoes")
     private String observacoes;
