@@ -12,3 +12,16 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.xml
+  cloud:
+    openfeign:
+      client:
+        config:
+          viaCepClient:
+            connectTimeout: 3000
+            readTimeout: 5000
+            loggerLevel: basic
+
+# Provedor externo de consulta de endereço por CEP.
+integracao:
+  viacep:
+    url: https://viacep.com.br/ws
