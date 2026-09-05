@@ -1,4 +1,4 @@
-package com.techup.gestao_patrimonio_imobiliario.config;
+package com.techup.gestao_patrimonio_imobiliario.infra.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

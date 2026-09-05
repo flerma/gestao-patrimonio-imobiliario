@@ -1,4 +1,4 @@
-package com.techup.gestao_patrimonio_imobiliario.integration.viacep;
+package com.techup.gestao_patrimonio_imobiliario.data.viacep;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;

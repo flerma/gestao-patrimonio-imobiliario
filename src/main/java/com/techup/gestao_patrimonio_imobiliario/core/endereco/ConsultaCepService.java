@@ -4,8 +4,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.techup.gestao_patrimonio_imobiliario.integration.viacep.ViaCepClient;
-import com.techup.gestao_patrimonio_imobiliario.integration.viacep.ViaCepResponse;
+import com.techup.gestao_patrimonio_imobiliario.data.viacep.ViaCepClient;
+import com.techup.gestao_patrimonio_imobiliario.data.viacep.ViaCepResponse;
 
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;

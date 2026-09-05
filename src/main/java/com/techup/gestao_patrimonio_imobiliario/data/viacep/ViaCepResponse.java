@@ -1,4 +1,4 @@
-package com.techup.gestao_patrimonio_imobiliario.integration.viacep;
+package com.techup.gestao_patrimonio_imobiliario.data.viacep;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
