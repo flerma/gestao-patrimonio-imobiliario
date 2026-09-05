@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: gestao-patrimonio-imobiliario
+  datasource:
+    url: jdbc:postgresql://localhost:5433/gestao_patrimonio_imobiliario
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
