@@ -11,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.techup.gestao_patrimonio_imobiliario.api.contrato.ContratoRequest;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusContrato;
+import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusImovel;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.TipoGarantia;
 import com.techup.gestao_patrimonio_imobiliario.core.pagamentoaluguel.PagamentoAluguelService;
 import com.techup.gestao_patrimonio_imobiliario.data.contrato.ContratoEntity;
@@ -44,12 +45,13 @@ public class ContratoService {
         ImovelEntity imovelEntity = buscarImovelEntity(request.getImovelId());
         InquilinoEntity inquilinoEntity = buscarInquilinoEntity(request.getInquilinoId());
         LocalDateTime agora = LocalDateTime.now();
+        StatusContrato statusContrato = request.getStatus() != null ? request.getStatus() : StatusContrato.RASCUNHO;
         ContratoEntity entity = ContratoEntity.builder()
                 .id(UUID.randomUUID())
                 .imovel(imovelEntity)
                 .inquilino(inquilinoEntity)
                 .tipo(request.getTipo())
-                .status(request.getStatus() != null ? request.getStatus() : StatusContrato.RASCUNHO)
+                .status(statusContrato)
                 .dataInicio(request.getDataInicio())
                 .dataFim(request.getDataFim())
                 .valorAluguel(request.getValorAluguel())
@@ -64,6 +66,7 @@ public class ContratoService {
                 .dataAtualizacao(agora)
                 .build();
         ContratoEntity salvo = contratoRepository.save(entity);
+        marcarImovelComoAlugadoSeAplicavel(imovelEntity, statusContrato);
         pagamentoAluguelService.gerarParaContrato(salvo);
         return ContratoMapper.toDomain(salvo);
     }
@@ -82,12 +85,14 @@ public class ContratoService {
 
     public Contrato atualizar(UUID id, ContratoRequest request) {
         ContratoEntity existente = buscarContratoEntity(id);
+        ImovelEntity imovelAnterior = existente.getImovel();
         ImovelEntity imovelEntity = buscarImovelEntity(request.getImovelId());
         InquilinoEntity inquilinoEntity = buscarInquilinoEntity(request.getInquilinoId());
         existente.setImovel(imovelEntity);
         existente.setInquilino(inquilinoEntity);
         existente.setTipo(request.getTipo());
-        existente.setStatus(request.getStatus() != null ? request.getStatus() : existente.getStatus());
+        StatusContrato novoStatus = request.getStatus() != null ? request.getStatus() : existente.getStatus();
+        existente.setStatus(novoStatus);
         existente.setDataInicio(request.getDataInicio());
         existente.setDataFim(request.getDataFim());
         existente.setValorAluguel(request.getValorAluguel());
@@ -99,15 +104,56 @@ public class ContratoService {
         existente.setValorGarantia(request.getValorGarantia());
         existente.setObservacoes(request.getObservacoes());
         existente.setDataAtualizacao(LocalDateTime.now());
-        return ContratoMapper.toDomain(contratoRepository.save(existente));
+        ContratoEntity salvo = contratoRepository.save(existente);
+
+        marcarImovelComoAlugadoSeAplicavel(imovelEntity, novoStatus);
+        if (novoStatus != StatusContrato.ATIVO) {
+            liberarImovelSeSemContratoAtivo(imovelEntity, salvo.getId());
+        }
+        if (imovelAnterior != null && !imovelAnterior.getId().equals(imovelEntity.getId())) {
+            liberarImovelSeSemContratoAtivo(imovelAnterior, salvo.getId());
+        }
+        return ContratoMapper.toDomain(salvo);
     }
 
     public void deletar(UUID id) {
-        if (!contratoRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Contrato nao encontrado: " + id);
-        }
+        ContratoEntity contrato = buscarContratoEntity(id);
+        ImovelEntity imovel = contrato.getImovel();
         pagamentoAluguelService.removerPorContrato(id);
-        contratoRepository.deleteById(id);
+        contratoRepository.delete(contrato);
+        if (imovel != null) {
+            liberarImovelSeSemContratoAtivo(imovel, id);
+        }
+    }
+
+    /**
+     * Quando um contrato passa a valer (status ATIVO), o imovel deixa de estar
+     * disponivel e passa a constar como alugado. Nao mexe em imoveis de uso
+     * proprio nem reverte um imovel ja alugado.
+     */
+    private void marcarImovelComoAlugadoSeAplicavel(ImovelEntity imovel, StatusContrato statusContrato) {
+        if (statusContrato == StatusContrato.ATIVO && imovel.getStatus() == StatusImovel.DISPONIVEL) {
+            imovel.setStatus(StatusImovel.ALUGADO);
+            imovelRepository.save(imovel);
+        }
+    }
+
+    /**
+     * Quando um contrato deixa de valer (encerrado, rescindido ou excluido) e o
+     * imovel nao possui nenhum outro contrato ATIVO, o imovel volta a ficar
+     * disponivel. So altera imovel que esteja marcado como ALUGADO (nao mexe em
+     * uso proprio). {@code contratoIdIgnorado} e desconsiderado na verificacao.
+     */
+    private void liberarImovelSeSemContratoAtivo(ImovelEntity imovel, UUID contratoIdIgnorado) {
+        if (imovel.getStatus() != StatusImovel.ALUGADO) {
+            return;
+        }
+        boolean temOutroContratoAtivo = contratoRepository
+                .existsByImovelIdAndStatusAndIdNot(imovel.getId(), StatusContrato.ATIVO, contratoIdIgnorado);
+        if (!temOutroContratoAtivo) {
+            imovel.setStatus(StatusImovel.DISPONIVEL);
+            imovelRepository.save(imovel);
+        }
     }
 
     private ContratoEntity buscarContratoEntity(UUID id) {
