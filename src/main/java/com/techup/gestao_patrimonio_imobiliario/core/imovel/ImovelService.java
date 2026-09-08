@@ -12,21 +12,21 @@ import org.springframework.web.server.ResponseStatusException;
 import com.techup.gestao_patrimonio_imobiliario.api.imovel.ImovelRequest;
 import com.techup.gestao_patrimonio_imobiliario.data.endereco.EnderecoMapper;
 import com.techup.gestao_patrimonio_imobiliario.data.imovel.ImovelEntity;
-import com.techup.gestao_patrimonio_imobiliario.data.imovel.ImovelJpaRepository;
+import com.techup.gestao_patrimonio_imobiliario.data.imovel.ImovelRepository;
 import com.techup.gestao_patrimonio_imobiliario.data.imovel.ImovelMapper;
 import com.techup.gestao_patrimonio_imobiliario.data.usuario.UsuarioEntity;
-import com.techup.gestao_patrimonio_imobiliario.data.usuario.UsuarioJpaRepository;
+import com.techup.gestao_patrimonio_imobiliario.data.usuario.UsuarioRepository;
 
 @Service
 @Transactional
 public class ImovelService {
 
-    private final ImovelJpaRepository imovelJpaRepository;
-    private final UsuarioJpaRepository usuarioJpaRepository;
+    private final ImovelRepository imovelRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    public ImovelService(ImovelJpaRepository imovelJpaRepository, UsuarioJpaRepository usuarioJpaRepository) {
-        this.imovelJpaRepository = imovelJpaRepository;
-        this.usuarioJpaRepository = usuarioJpaRepository;
+    public ImovelService(ImovelRepository imovelRepository, UsuarioRepository usuarioRepository) {
+        this.imovelRepository = imovelRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     public Imovel criar(ImovelRequest request) {
@@ -44,12 +44,12 @@ public class ImovelService {
                 .dataCriacao(agora)
                 .dataAtualizacao(agora)
                 .build();
-        return ImovelMapper.toDomain(imovelJpaRepository.save(entity));
+        return ImovelMapper.toDomain(imovelRepository.save(entity));
     }
 
     @Transactional(readOnly = true)
     public List<Imovel> listar() {
-        return imovelJpaRepository.findAll().stream()
+        return imovelRepository.findAll().stream()
                 .map(ImovelMapper::toDomain)
                 .toList();
     }
@@ -70,23 +70,23 @@ public class ImovelService {
         existente.setValorAtual(request.getValorAtual());
         existente.setEndereco(EnderecoMapper.toEmbeddable(request.getEndereco()));
         existente.setDataAtualizacao(LocalDateTime.now());
-        return ImovelMapper.toDomain(imovelJpaRepository.save(existente));
+        return ImovelMapper.toDomain(imovelRepository.save(existente));
     }
 
     public void deletar(UUID id) {
-        if (!imovelJpaRepository.existsById(id)) {
+        if (!imovelRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Imovel nao encontrado: " + id);
         }
-        imovelJpaRepository.deleteById(id);
+        imovelRepository.deleteById(id);
     }
 
     private ImovelEntity buscarImovelEntity(UUID id) {
-        return imovelJpaRepository.findById(id)
+        return imovelRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Imovel nao encontrado: " + id));
     }
 
     private UsuarioEntity buscarUsuarioEntity(UUID usuarioId) {
-        return usuarioJpaRepository.findById(usuarioId)
+        return usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontrado: " + usuarioId));
     }
 }

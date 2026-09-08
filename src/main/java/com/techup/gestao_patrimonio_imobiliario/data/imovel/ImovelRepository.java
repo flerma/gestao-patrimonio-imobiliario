@@ -4,5 +4,5 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ImovelJpaRepository extends JpaRepository<ImovelEntity, UUID> {
+public interface ImovelRepository extends JpaRepository<ImovelEntity, UUID> {
 }

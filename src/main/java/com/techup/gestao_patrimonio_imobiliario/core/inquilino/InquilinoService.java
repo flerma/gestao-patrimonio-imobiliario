@@ -12,17 +12,17 @@ import org.springframework.web.server.ResponseStatusException;
 import com.techup.gestao_patrimonio_imobiliario.api.inquilino.InquilinoRequest;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusInquilino;
 import com.techup.gestao_patrimonio_imobiliario.data.inquilino.InquilinoEntity;
-import com.techup.gestao_patrimonio_imobiliario.data.inquilino.InquilinoJpaRepository;
+import com.techup.gestao_patrimonio_imobiliario.data.inquilino.InquilinoRepository;
 import com.techup.gestao_patrimonio_imobiliario.data.inquilino.InquilinoMapper;
 
 @Service
 @Transactional
 public class InquilinoService {
 
-    private final InquilinoJpaRepository inquilinoJpaRepository;
+    private final InquilinoRepository inquilinoRepository;
 
-    public InquilinoService(InquilinoJpaRepository inquilinoJpaRepository) {
-        this.inquilinoJpaRepository = inquilinoJpaRepository;
+    public InquilinoService(InquilinoRepository inquilinoRepository) {
+        this.inquilinoRepository = inquilinoRepository;
     }
 
     public Inquilino criar(InquilinoRequest request) {
@@ -41,20 +41,20 @@ public class InquilinoService {
                 .dataCriacao(agora)
                 .dataAtualizacao(agora)
                 .build();
-        InquilinoEntity salvo = inquilinoJpaRepository.save(InquilinoMapper.toEntity(inquilino));
+        InquilinoEntity salvo = inquilinoRepository.save(InquilinoMapper.toEntity(inquilino));
         return InquilinoMapper.toDomain(salvo);
     }
 
     @Transactional(readOnly = true)
     public List<Inquilino> listar() {
-        return inquilinoJpaRepository.findAll().stream()
+        return inquilinoRepository.findAll().stream()
                 .map(InquilinoMapper::toDomain)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public Inquilino buscarPorId(UUID id) {
-        return inquilinoJpaRepository.findById(id)
+        return inquilinoRepository.findById(id)
                 .map(InquilinoMapper::toDomain)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inquilino nao encontrado: " + id));
     }
@@ -72,14 +72,14 @@ public class InquilinoService {
                 .withObservacoes(request.getObservacoes())
                 .withStatus(request.getStatus() != null ? request.getStatus() : existente.getStatus())
                 .withDataAtualizacao(LocalDateTime.now());
-        InquilinoEntity salvo = inquilinoJpaRepository.save(InquilinoMapper.toEntity(atualizado));
+        InquilinoEntity salvo = inquilinoRepository.save(InquilinoMapper.toEntity(atualizado));
         return InquilinoMapper.toDomain(salvo);
     }
 
     public void deletar(UUID id) {
-        if (!inquilinoJpaRepository.existsById(id)) {
+        if (!inquilinoRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Inquilino nao encontrado: " + id);
         }
-        inquilinoJpaRepository.deleteById(id);
+        inquilinoRepository.deleteById(id);
     }
 }

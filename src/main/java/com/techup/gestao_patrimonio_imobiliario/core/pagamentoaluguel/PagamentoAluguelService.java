@@ -1,0 +1,173 @@
+package com.techup.gestao_patrimonio_imobiliario.core.pagamentoaluguel;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.techup.gestao_patrimonio_imobiliario.api.pagamentoaluguel.PagamentoAluguelRequest;
+import com.techup.gestao_patrimonio_imobiliario.api.pagamentoaluguel.RegistrarPagamentoRequest;
+import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusPagamentoAluguel;
+import com.techup.gestao_patrimonio_imobiliario.data.contrato.ContratoEntity;
+import com.techup.gestao_patrimonio_imobiliario.data.contrato.ContratoRepository;
+import com.techup.gestao_patrimonio_imobiliario.data.pagamentoaluguel.PagamentoAluguelEntity;
+import com.techup.gestao_patrimonio_imobiliario.data.pagamentoaluguel.PagamentoAluguelRepository;
+import com.techup.gestao_patrimonio_imobiliario.data.pagamentoaluguel.PagamentoAluguelMapper;
+
+@Service
+@Transactional
+public class PagamentoAluguelService {
+
+    private final PagamentoAluguelRepository pagamentoAluguelRepository;
+    private final ContratoRepository contratoRepository;
+
+    public PagamentoAluguelService(PagamentoAluguelRepository pagamentoAluguelRepository,
+                                   ContratoRepository contratoRepository) {
+        this.pagamentoAluguelRepository = pagamentoAluguelRepository;
+        this.contratoRepository = contratoRepository;
+    }
+
+    /**
+     * Gera automaticamente a serie de alugueis do contrato: uma cobranca por mes,
+     * do mes de inicio ao mes de fim do contrato, com vencimento no dia configurado
+     * em {@code diaVencimento} (ajustado para o ultimo dia quando o mes for mais curto).
+     * Idempotente: competencias ja existentes para o contrato sao ignoradas.
+     */
+    public List<PagamentoAluguel> gerarParaContrato(ContratoEntity contrato) {
+        if (contrato.getDataInicio() == null || contrato.getDataFim() == null) {
+            return List.of();
+        }
+        YearMonth primeira = YearMonth.from(contrato.getDataInicio());
+        YearMonth ultima = YearMonth.from(contrato.getDataFim());
+        if (ultima.isBefore(primeira)) {
+            return List.of();
+        }
+
+        LocalDateTime agora = LocalDateTime.now();
+        List<PagamentoAluguelEntity> novos = new ArrayList<>();
+        for (YearMonth competencia = primeira; !competencia.isAfter(ultima); competencia = competencia.plusMonths(1)) {
+            if (pagamentoAluguelRepository.existsByContratoIdAndCompetencia(contrato.getId(), competencia.atDay(1))) {
+                continue;
+            }
+            int dia = Math.min(contrato.getDiaVencimento(), competencia.lengthOfMonth());
+            novos.add(PagamentoAluguelEntity.builder()
+                    .id(UUID.randomUUID())
+                    .contrato(contrato)
+                    .competencia(competencia.atDay(1))
+                    .dataVencimento(competencia.atDay(dia))
+                    .valorPrevisto(contrato.getValorAluguel())
+                    .status(StatusPagamentoAluguel.PENDENTE)
+                    .dataCriacao(agora)
+                    .dataAtualizacao(agora)
+                    .build());
+        }
+        return pagamentoAluguelRepository.saveAll(novos).stream()
+                .map(PagamentoAluguelMapper::toDomain)
+                .toList();
+    }
+
+    public void removerPorContrato(UUID contratoId) {
+        pagamentoAluguelRepository.deleteByContratoId(contratoId);
+    }
+
+    public PagamentoAluguel criar(PagamentoAluguelRequest request) {
+        ContratoEntity contrato = buscarContratoEntity(request.getContratoId());
+        LocalDateTime agora = LocalDateTime.now();
+        PagamentoAluguelEntity entity = PagamentoAluguelEntity.builder()
+                .id(UUID.randomUUID())
+                .contrato(contrato)
+                .competencia(request.getCompetencia().atDay(1))
+                .dataVencimento(request.getDataVencimento())
+                .valorPrevisto(request.getValorPrevisto())
+                .valorPago(request.getValorPago())
+                .dataPagamento(request.getDataPagamento())
+                .status(request.getStatus() != null ? request.getStatus() : StatusPagamentoAluguel.PENDENTE)
+                .formaPagamento(request.getFormaPagamento())
+                .observacoes(request.getObservacoes())
+                .dataCriacao(agora)
+                .dataAtualizacao(agora)
+                .build();
+        return PagamentoAluguelMapper.toDomain(pagamentoAluguelRepository.save(entity));
+    }
+
+    @Transactional(readOnly = true)
+    public List<PagamentoAluguel> listar(UUID contratoId) {
+        List<PagamentoAluguelEntity> entidades = contratoId != null
+                ? pagamentoAluguelRepository.findByContratoIdOrderByCompetenciaAsc(contratoId)
+                : pagamentoAluguelRepository.findAllByOrderByDataVencimentoAsc();
+        return entidades.stream()
+                .map(PagamentoAluguelMapper::toDomain)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PagamentoAluguel buscarPorId(UUID id) {
+        return PagamentoAluguelMapper.toDomain(buscarEntity(id));
+    }
+
+    public PagamentoAluguel atualizar(UUID id, PagamentoAluguelRequest request) {
+        PagamentoAluguelEntity existente = buscarEntity(id);
+        ContratoEntity contrato = buscarContratoEntity(request.getContratoId());
+        existente.setContrato(contrato);
+        existente.setCompetencia(request.getCompetencia().atDay(1));
+        existente.setDataVencimento(request.getDataVencimento());
+        existente.setValorPrevisto(request.getValorPrevisto());
+        existente.setValorPago(request.getValorPago());
+        existente.setDataPagamento(request.getDataPagamento());
+        existente.setStatus(request.getStatus() != null ? request.getStatus() : existente.getStatus());
+        existente.setFormaPagamento(request.getFormaPagamento());
+        existente.setObservacoes(request.getObservacoes());
+        existente.setDataAtualizacao(LocalDateTime.now());
+        return PagamentoAluguelMapper.toDomain(pagamentoAluguelRepository.save(existente));
+    }
+
+    /**
+     * Registra o recebimento e recalcula o status conforme a regra de dominio
+     * (PAGO / PAGO_COM_ATRASO / PAGO_PARCIALMENTE).
+     */
+    public PagamentoAluguel registrarPagamento(UUID id, RegistrarPagamentoRequest request) {
+        PagamentoAluguelEntity existente = buscarEntity(id);
+        LocalDate dataPagamento = request.getDataPagamento() != null ? request.getDataPagamento() : LocalDate.now();
+
+        PagamentoAluguel comPagamento = PagamentoAluguelMapper.toDomain(existente)
+                .withValorPago(request.getValorPago())
+                .withDataPagamento(dataPagamento)
+                .withFormaPagamento(request.getFormaPagamento());
+
+        existente.setValorPago(request.getValorPago());
+        existente.setDataPagamento(dataPagamento);
+        existente.setFormaPagamento(request.getFormaPagamento());
+        if (request.getObservacoes() != null) {
+            existente.setObservacoes(request.getObservacoes());
+        }
+        existente.setStatus(comPagamento.resolverStatusAposPagamento());
+        existente.setDataAtualizacao(LocalDateTime.now());
+        return PagamentoAluguelMapper.toDomain(pagamentoAluguelRepository.save(existente));
+    }
+
+    public void deletar(UUID id) {
+        if (!pagamentoAluguelRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pagamento de aluguel nao encontrado: " + id);
+        }
+        pagamentoAluguelRepository.deleteById(id);
+    }
+
+    private PagamentoAluguelEntity buscarEntity(UUID id) {
+        return pagamentoAluguelRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Pagamento de aluguel nao encontrado: " + id));
+    }
+
+    private ContratoEntity buscarContratoEntity(UUID contratoId) {
+        return contratoRepository.findById(contratoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Contrato nao encontrado: " + contratoId));
+    }
+}

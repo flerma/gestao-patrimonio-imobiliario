@@ -12,17 +12,17 @@ import org.springframework.web.server.ResponseStatusException;
 import com.techup.gestao_patrimonio_imobiliario.api.usuario.UsuarioRequest;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusUsuario;
 import com.techup.gestao_patrimonio_imobiliario.data.usuario.UsuarioEntity;
-import com.techup.gestao_patrimonio_imobiliario.data.usuario.UsuarioJpaRepository;
+import com.techup.gestao_patrimonio_imobiliario.data.usuario.UsuarioRepository;
 import com.techup.gestao_patrimonio_imobiliario.data.usuario.UsuarioMapper;
 
 @Service
 @Transactional
 public class UsuarioService {
 
-    private final UsuarioJpaRepository usuarioJpaRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    public UsuarioService(UsuarioJpaRepository usuarioJpaRepository) {
-        this.usuarioJpaRepository = usuarioJpaRepository;
+    public UsuarioService(UsuarioRepository usuarioRepository) {
+        this.usuarioRepository = usuarioRepository;
     }
 
     public Usuario criar(UsuarioRequest request) {
@@ -37,20 +37,20 @@ public class UsuarioService {
                 .dataCriacao(agora)
                 .dataAtualizacao(agora)
                 .build();
-        UsuarioEntity salvo = usuarioJpaRepository.save(UsuarioMapper.toEntity(usuario));
+        UsuarioEntity salvo = usuarioRepository.save(UsuarioMapper.toEntity(usuario));
         return UsuarioMapper.toDomain(salvo);
     }
 
     @Transactional(readOnly = true)
     public List<Usuario> listar() {
-        return usuarioJpaRepository.findAll().stream()
+        return usuarioRepository.findAll().stream()
                 .map(UsuarioMapper::toDomain)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public Usuario buscarPorId(UUID id) {
-        return usuarioJpaRepository.findById(id)
+        return usuarioRepository.findById(id)
                 .map(UsuarioMapper::toDomain)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontrado: " + id));
     }
@@ -64,14 +64,14 @@ public class UsuarioService {
                 .withIdUsuarioProvedor(request.getIdUsuarioProvedor())
                 .withStatus(request.getStatus() != null ? request.getStatus() : existente.getStatus())
                 .withDataAtualizacao(LocalDateTime.now());
-        UsuarioEntity salvo = usuarioJpaRepository.save(UsuarioMapper.toEntity(atualizado));
+        UsuarioEntity salvo = usuarioRepository.save(UsuarioMapper.toEntity(atualizado));
         return UsuarioMapper.toDomain(salvo);
     }
 
     public void deletar(UUID id) {
-        if (!usuarioJpaRepository.existsById(id)) {
+        if (!usuarioRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontrado: " + id);
         }
-        usuarioJpaRepository.deleteById(id);
+        usuarioRepository.deleteById(id);
     }
 }

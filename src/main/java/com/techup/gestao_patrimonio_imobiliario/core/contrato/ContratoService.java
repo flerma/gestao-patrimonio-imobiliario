@@ -12,28 +12,32 @@ import org.springframework.web.server.ResponseStatusException;
 import com.techup.gestao_patrimonio_imobiliario.api.contrato.ContratoRequest;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusContrato;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.TipoGarantia;
+import com.techup.gestao_patrimonio_imobiliario.core.pagamentoaluguel.PagamentoAluguelService;
 import com.techup.gestao_patrimonio_imobiliario.data.contrato.ContratoEntity;
-import com.techup.gestao_patrimonio_imobiliario.data.contrato.ContratoJpaRepository;
+import com.techup.gestao_patrimonio_imobiliario.data.contrato.ContratoRepository;
 import com.techup.gestao_patrimonio_imobiliario.data.contrato.ContratoMapper;
 import com.techup.gestao_patrimonio_imobiliario.data.imovel.ImovelEntity;
-import com.techup.gestao_patrimonio_imobiliario.data.imovel.ImovelJpaRepository;
+import com.techup.gestao_patrimonio_imobiliario.data.imovel.ImovelRepository;
 import com.techup.gestao_patrimonio_imobiliario.data.inquilino.InquilinoEntity;
-import com.techup.gestao_patrimonio_imobiliario.data.inquilino.InquilinoJpaRepository;
+import com.techup.gestao_patrimonio_imobiliario.data.inquilino.InquilinoRepository;
 
 @Service
 @Transactional
 public class ContratoService {
 
-    private final ContratoJpaRepository contratoJpaRepository;
-    private final ImovelJpaRepository imovelJpaRepository;
-    private final InquilinoJpaRepository inquilinoJpaRepository;
+    private final ContratoRepository contratoRepository;
+    private final ImovelRepository imovelRepository;
+    private final InquilinoRepository inquilinoRepository;
+    private final PagamentoAluguelService pagamentoAluguelService;
 
-    public ContratoService(ContratoJpaRepository contratoJpaRepository,
-                            ImovelJpaRepository imovelJpaRepository,
-                            InquilinoJpaRepository inquilinoJpaRepository) {
-        this.contratoJpaRepository = contratoJpaRepository;
-        this.imovelJpaRepository = imovelJpaRepository;
-        this.inquilinoJpaRepository = inquilinoJpaRepository;
+    public ContratoService(ContratoRepository contratoRepository,
+                           ImovelRepository imovelRepository,
+                           InquilinoRepository inquilinoRepository,
+                           PagamentoAluguelService pagamentoAluguelService) {
+        this.contratoRepository = contratoRepository;
+        this.imovelRepository = imovelRepository;
+        this.inquilinoRepository = inquilinoRepository;
+        this.pagamentoAluguelService = pagamentoAluguelService;
     }
 
     public Contrato criar(ContratoRequest request) {
@@ -59,12 +63,14 @@ public class ContratoService {
                 .dataCriacao(agora)
                 .dataAtualizacao(agora)
                 .build();
-        return ContratoMapper.toDomain(contratoJpaRepository.save(entity));
+        ContratoEntity salvo = contratoRepository.save(entity);
+        pagamentoAluguelService.gerarParaContrato(salvo);
+        return ContratoMapper.toDomain(salvo);
     }
 
     @Transactional(readOnly = true)
     public List<Contrato> listar() {
-        return contratoJpaRepository.findAll().stream()
+        return contratoRepository.findAll().stream()
                 .map(ContratoMapper::toDomain)
                 .toList();
     }
@@ -93,28 +99,29 @@ public class ContratoService {
         existente.setValorGarantia(request.getValorGarantia());
         existente.setObservacoes(request.getObservacoes());
         existente.setDataAtualizacao(LocalDateTime.now());
-        return ContratoMapper.toDomain(contratoJpaRepository.save(existente));
+        return ContratoMapper.toDomain(contratoRepository.save(existente));
     }
 
     public void deletar(UUID id) {
-        if (!contratoJpaRepository.existsById(id)) {
+        if (!contratoRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Contrato nao encontrado: " + id);
         }
-        contratoJpaRepository.deleteById(id);
+        pagamentoAluguelService.removerPorContrato(id);
+        contratoRepository.deleteById(id);
     }
 
     private ContratoEntity buscarContratoEntity(UUID id) {
-        return contratoJpaRepository.findById(id)
+        return contratoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Contrato nao encontrado: " + id));
     }
 
     private ImovelEntity buscarImovelEntity(UUID imovelId) {
-        return imovelJpaRepository.findById(imovelId)
+        return imovelRepository.findById(imovelId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Imovel nao encontrado: " + imovelId));
     }
 
     private InquilinoEntity buscarInquilinoEntity(UUID inquilinoId) {
-        return inquilinoJpaRepository.findById(inquilinoId)
+        return inquilinoRepository.findById(inquilinoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inquilino nao encontrado: " + inquilinoId));
     }
 }
