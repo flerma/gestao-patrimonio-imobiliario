@@ -1,0 +1,597 @@
+{
+  "info": {
+    "name": "Gestão de Patrimônio Imobiliário - API",
+    "_postman_id": "b7c1e2a0-1f2d-4a3b-9c4d-0e5f6a7b8c90",
+    "description": "Collection com todos os endpoints da API REST do backend (gestao-patrimonio-imobiliario).\n\nRecursos: Usuários, Imóveis, Inquilinos, Contratos, Pagamentos de Aluguel e consulta de Endereço por CEP.\n\nAs requisições de criação (POST) salvam o `id` retornado nas variáveis da collection (`usuarioId`, `imovelId`, `inquilinoId`, `contratoId`, `pagamentoId`), de modo que os demais requests (GET por id, PUT, DELETE) já funcionam encadeados.\n\nSegurança: em ambiente de desenvolvimento a API está totalmente liberada (SecurityConfig permitAll), portanto nenhum token é necessário.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+    { "key": "usuarioId", "value": "", "type": "string" },
+    { "key": "imovelId", "value": "", "type": "string" },
+    { "key": "inquilinoId", "value": "", "type": "string" },
+    { "key": "contratoId", "value": "", "type": "string" },
+    { "key": "pagamentoId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Usuários",
+      "item": [
+        {
+          "name": "Criar usuário",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('usuarioId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Fernando Lerma\",\n  \"email\": \"fernando.lerma@example.com\",\n  \"provedorAutenticacao\": \"LOCAL\",\n  \"idUsuarioProvedor\": null,\n  \"status\": \"ATIVO\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "usuarios" ]
+            },
+            "description": "Cadastra um novo usuário. `provedorAutenticacao`: LOCAL | GOOGLE | FACEBOOK. `status`: ATIVO | INATIVO (opcional)."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar usuários",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "usuarios" ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar usuário por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "usuarios", "{{usuarioId}}" ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar usuário",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Fernando Lerma\",\n  \"email\": \"fernando.lerma@example.com\",\n  \"provedorAutenticacao\": \"LOCAL\",\n  \"idUsuarioProvedor\": null,\n  \"status\": \"INATIVO\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "usuarios", "{{usuarioId}}" ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Excluir usuário",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "usuarios", "{{usuarioId}}" ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Imóveis",
+      "item": [
+        {
+          "name": "Criar imóvel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('imovelId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": \"{{usuarioId}}\",\n  \"nome\": \"Apartamento Centro\",\n  \"tipo\": \"APARTAMENTO\",\n  \"status\": \"DISPONIVEL\",\n  \"valorAquisicao\": 350000.00,\n  \"valorAtual\": 420000.00,\n  \"endereco\": {\n    \"cep\": \"01001-000\",\n    \"logradouro\": \"Praça da Sé\",\n    \"numero\": \"100\",\n    \"complemento\": \"Apto 52\",\n    \"bairro\": \"Sé\",\n    \"cidade\": \"São Paulo\",\n    \"estado\": \"SP\",\n    \"pais\": \"Brasil\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/imoveis",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "imoveis" ]
+            },
+            "description": "`tipo`: CASA | APARTAMENTO | SALA_COMERCIAL | LOJA | GALPAO | TERRENO | SITIO | FAZENDA | KITNET | GARAGEM | OUTRO.\n`status`: ALUGADO | DISPONIVEL | OCUPADO_PELO_PROPRIETARIO."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar imóveis",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/imoveis",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "imoveis" ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar imóvel por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/imoveis/{{imovelId}}",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "imoveis", "{{imovelId}}" ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar imóvel",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": \"{{usuarioId}}\",\n  \"nome\": \"Apartamento Centro (reformado)\",\n  \"tipo\": \"APARTAMENTO\",\n  \"status\": \"ALUGADO\",\n  \"valorAquisicao\": 350000.00,\n  \"valorAtual\": 450000.00,\n  \"endereco\": {\n    \"cep\": \"01001-000\",\n    \"logradouro\": \"Praça da Sé\",\n    \"numero\": \"100\",\n    \"complemento\": \"Apto 52\",\n    \"bairro\": \"Sé\",\n    \"cidade\": \"São Paulo\",\n    \"estado\": \"SP\",\n    \"pais\": \"Brasil\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/imoveis/{{imovelId}}",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "imoveis", "{{imovelId}}" ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Excluir imóvel",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/imoveis/{{imovelId}}",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "imoveis", "{{imovelId}}" ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Inquilinos",
+      "item": [
+        {
+          "name": "Criar inquilino",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('inquilinoId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipoPessoa\": \"FISICA\",\n  \"nome\": \"Maria Souza\",\n  \"documento\": \"123.456.789-09\",\n  \"email\": \"maria.souza@example.com\",\n  \"telefone\": \"(11) 98888-7777\",\n  \"dataNascimento\": \"1990-05-20\",\n  \"endereco\": {\n    \"cep\": \"04547-006\",\n    \"logradouro\": \"Rua Fictícia\",\n    \"numero\": \"45\",\n    \"complemento\": null,\n    \"bairro\": \"Vila Olímpia\",\n    \"cidade\": \"São Paulo\",\n    \"estado\": \"SP\",\n    \"pais\": \"Brasil\"\n  },\n  \"observacoes\": \"Contato preferencial por WhatsApp\",\n  \"status\": \"ATIVO\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/inquilinos",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "inquilinos" ]
+            },
+            "description": "`tipoPessoa`: FISICA | JURIDICA. `status`: ATIVO | INATIVO (opcional). `endereco` e `dataNascimento` são opcionais."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar inquilinos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/inquilinos",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "inquilinos" ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar inquilino por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/inquilinos/{{inquilinoId}}",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "inquilinos", "{{inquilinoId}}" ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar inquilino",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipoPessoa\": \"FISICA\",\n  \"nome\": \"Maria Souza Lima\",\n  \"documento\": \"123.456.789-09\",\n  \"email\": \"maria.souzalima@example.com\",\n  \"telefone\": \"(11) 97777-6666\",\n  \"dataNascimento\": \"1990-05-20\",\n  \"endereco\": {\n    \"cep\": \"04547-006\",\n    \"logradouro\": \"Rua Fictícia\",\n    \"numero\": \"45\",\n    \"complemento\": \"Casa 2\",\n    \"bairro\": \"Vila Olímpia\",\n    \"cidade\": \"São Paulo\",\n    \"estado\": \"SP\",\n    \"pais\": \"Brasil\"\n  },\n  \"observacoes\": null,\n  \"status\": \"ATIVO\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/inquilinos/{{inquilinoId}}",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "inquilinos", "{{inquilinoId}}" ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Excluir inquilino",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/inquilinos/{{inquilinoId}}",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "inquilinos", "{{inquilinoId}}" ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Contratos",
+      "item": [
+        {
+          "name": "Criar contrato",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('contratoId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"imovelId\": \"{{imovelId}}\",\n  \"inquilinoId\": \"{{inquilinoId}}\",\n  \"tipo\": \"RESIDENCIAL\",\n  \"status\": \"ATIVO\",\n  \"dataInicio\": \"2026-09-01\",\n  \"dataFim\": \"2027-08-31\",\n  \"valorAluguel\": 2500.00,\n  \"diaVencimento\": 10,\n  \"indiceReajuste\": \"IPCA\",\n  \"percentualReajuste\": 0,\n  \"periodoReajuste\": 12,\n  \"tipoGarantia\": \"CAUCAO\",\n  \"valorGarantia\": 7500.00,\n  \"observacoes\": \"Contrato de 12 meses\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/contratos",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "contratos" ]
+            },
+            "description": "Ao criar o contrato, a API gera automaticamente a série de pagamentos de aluguel (um por mês, de `dataInicio` a `dataFim`).\n\n`tipo`: RESIDENCIAL | COMERCIAL | TEMPORADA | ARRENDAMENTO_RURAL.\n`status`: RASCUNHO | ATIVO | ENCERRADO | RESCINDIDO (opcional, default RASCUNHO).\n`indiceReajuste`: IPCA | IGP_M | INPC | FIXO | SEM_REAJUSTE (opcional).\n`tipoGarantia`: SEM_GARANTIA | CAUCAO | FIADOR | SEGURO_FIANCA | TITULO_CAPITALIZACAO | OUTRA (opcional).\n`diaVencimento`: 1 a 31."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar contratos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contratos",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "contratos" ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar contrato por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contratos/{{contratoId}}",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "contratos", "{{contratoId}}" ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar contrato",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"imovelId\": \"{{imovelId}}\",\n  \"inquilinoId\": \"{{inquilinoId}}\",\n  \"tipo\": \"RESIDENCIAL\",\n  \"status\": \"ATIVO\",\n  \"dataInicio\": \"2026-09-01\",\n  \"dataFim\": \"2027-08-31\",\n  \"valorAluguel\": 2650.00,\n  \"diaVencimento\": 10,\n  \"indiceReajuste\": \"IPCA\",\n  \"percentualReajuste\": 6.0,\n  \"periodoReajuste\": 12,\n  \"tipoGarantia\": \"CAUCAO\",\n  \"valorGarantia\": 7950.00,\n  \"observacoes\": \"Reajuste aplicado\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/contratos/{{contratoId}}",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "contratos", "{{contratoId}}" ]
+            },
+            "description": "Obs.: a atualização do contrato NÃO regenera os pagamentos de aluguel já criados."
+          },
+          "response": []
+        },
+        {
+          "name": "Excluir contrato",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contratos/{{contratoId}}",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "contratos", "{{contratoId}}" ]
+            },
+            "description": "Remove o contrato e todos os pagamentos de aluguel vinculados a ele."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pagamentos de Aluguel",
+      "item": [
+        {
+          "name": "Listar pagamentos (todos)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pagamentos-aluguel",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "pagamentos-aluguel" ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar pagamentos por contrato",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const arr = pm.response.json();",
+                  "if (Array.isArray(arr) && arr.length > 0) {",
+                  "    pm.collectionVariables.set('pagamentoId', arr[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pagamentos-aluguel?contratoId={{contratoId}}",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "pagamentos-aluguel" ],
+              "query": [ { "key": "contratoId", "value": "{{contratoId}}" } ]
+            },
+            "description": "Retorna os pagamentos do contrato, ordenados por competência. O primeiro `id` da lista é salvo em `pagamentoId`."
+          },
+          "response": []
+        },
+        {
+          "name": "Criar pagamento (manual)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('pagamentoId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contratoId\": \"{{contratoId}}\",\n  \"competencia\": \"2026-09\",\n  \"dataVencimento\": \"2026-09-10\",\n  \"valorPrevisto\": 2500.00,\n  \"valorPago\": null,\n  \"dataPagamento\": null,\n  \"status\": \"PENDENTE\",\n  \"formaPagamento\": null,\n  \"observacoes\": \"Cobrança avulsa\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pagamentos-aluguel",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "pagamentos-aluguel" ]
+            },
+            "description": "A geração automática acontece ao criar o contrato; use este endpoint apenas para cobranças avulsas.\n\n`competencia`: formato YYYY-MM (ex.: 2026-09).\n`status`: PENDENTE | PAGO | PAGO_COM_ATRASO | PAGO_PARCIALMENTE | EM_ATRASO | CANCELADO (opcional, default PENDENTE).\n`formaPagamento`: PIX | TRANSFERENCIA | BOLETO | DINHEIRO | CARTAO | CHEQUE | OUTRA (opcional)."
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar pagamento por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pagamentos-aluguel/{{pagamentoId}}",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "pagamentos-aluguel", "{{pagamentoId}}" ]
+            },
+            "description": "Retorna o pagamento com `status` (persistido), `statusEfetivo` (considerando a data de hoje), `emAtraso` e `saldo`."
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar pagamento",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contratoId\": \"{{contratoId}}\",\n  \"competencia\": \"2026-09\",\n  \"dataVencimento\": \"2026-09-12\",\n  \"valorPrevisto\": 2500.00,\n  \"valorPago\": null,\n  \"dataPagamento\": null,\n  \"status\": \"PENDENTE\",\n  \"formaPagamento\": null,\n  \"observacoes\": \"Vencimento prorrogado\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pagamentos-aluguel/{{pagamentoId}}",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "pagamentos-aluguel", "{{pagamentoId}}" ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registrar pagamento (baixa)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"valorPago\": 2500.00,\n  \"dataPagamento\": \"2026-09-10\",\n  \"formaPagamento\": \"PIX\",\n  \"observacoes\": \"Pago via PIX\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pagamentos-aluguel/{{pagamentoId}}/registrar-pagamento",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "pagamentos-aluguel", "{{pagamentoId}}", "registrar-pagamento" ]
+            },
+            "description": "Registra o recebimento e recalcula o status:\n- saldo em aberto -> PAGO_PARCIALMENTE\n- quitado no prazo -> PAGO\n- quitado após o vencimento -> PAGO_COM_ATRASO\n\n`dataPagamento` é opcional (assume a data atual). `formaPagamento`: PIX | TRANSFERENCIA | BOLETO | DINHEIRO | CARTAO | CHEQUE | OUTRA."
+          },
+          "response": []
+        },
+        {
+          "name": "Registrar pagamento parcial",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"valorPago\": 2300.00,\n  \"dataPagamento\": \"2026-09-10\",\n  \"formaPagamento\": \"TRANSFERENCIA\",\n  \"observacoes\": \"Pagamento parcial - saldo de R$ 200,00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pagamentos-aluguel/{{pagamentoId}}/registrar-pagamento",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "pagamentos-aluguel", "{{pagamentoId}}", "registrar-pagamento" ]
+            },
+            "description": "Exemplo de pagamento parcial: valorPrevisto 2500 e valorPago 2300 resultam em status PAGO_PARCIALMENTE e saldo 200."
+          },
+          "response": []
+        },
+        {
+          "name": "Excluir pagamento",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pagamentos-aluguel/{{pagamentoId}}",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "pagamentos-aluguel", "{{pagamentoId}}" ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Endereços",
+      "item": [
+        {
+          "name": "Consultar endereço por CEP",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/enderecos/cep/01001-000",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "enderecos", "cep", "01001-000" ]
+            },
+            "description": "Consulta o provedor ViaCEP. Aceita o CEP com ou sem máscara (01001000 ou 01001-000)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Infra",
+      "item": [
+        {
+          "name": "Health check (Actuator)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "actuator", "health" ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "OpenAPI JSON (springdoc)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v3/api-docs",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "v3", "api-docs" ]
+            },
+            "description": "Especificação OpenAPI gerada pelo springdoc. UI em {{baseUrl}}/swagger-ui.html."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
