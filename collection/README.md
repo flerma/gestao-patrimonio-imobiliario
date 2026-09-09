@@ -32,6 +32,8 @@ da collection. Ordem sugerida para um fluxo completo:
 | Inquilinos | `/api/inquilinos` | POST, GET (lista), GET `/{id}`, PUT `/{id}`, DELETE `/{id}` |
 | Contratos | `/api/contratos` | POST, GET (lista), GET `/{id}`, PUT `/{id}`, DELETE `/{id}` |
 | Pagamentos de Aluguel | `/api/pagamentos-aluguel` | POST, GET (lista, `?contratoId=`), GET `/{id}`, PUT `/{id}`, POST `/{id}/registrar-pagamento`, DELETE `/{id}` |
+| Alertas | `/api/alertas` | GET (lista, `?usuarioId=`) |
+| Notificações | `/api/notificacoes` | POST `/dispositivos`, DELETE `/dispositivos?token=`, POST `/enviar`, POST `/testar?token=` |
 | Endereços | `/api/enderecos` | GET `/cep/{cep}` |
 | Infra | — | GET `/actuator/health`, GET `/v3/api-docs` |
 
