@@ -1,0 +1,46 @@
+name: Deploy Backend Lightsail
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configurar chave SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.LIGHTSAIL_SSH_KEY }}" > ~/.ssh/lightsail_key
+          chmod 600 ~/.ssh/lightsail_key
+
+      - name: Adicionar servidor aos hosts conhecidos
+        run: |
+          ssh-keyscan -H "${{ secrets.LIGHTSAIL_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Fazer deploy
+        run: |
+          ssh \
+            -i ~/.ssh/lightsail_key \
+            ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} << 'EOF'
+
+            set -e
+
+            cd /home/ubuntu/gestao-patrimonio-imobiliario
+
+            echo "Atualizando código..."
+            git pull origin main
+
+            echo "Construindo containers..."
+            docker compose build
+
+            echo "Atualizando aplicação..."
+            docker compose up -d
+
+            echo "Status:"
+            docker compose ps
+
+            echo "Deploy concluído."
+          EOF
