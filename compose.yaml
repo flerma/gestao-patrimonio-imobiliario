@@ -1,0 +1,44 @@
+services:
+
+  banco:
+    image: postgres:16
+    container_name: gestao-patrimonio-banco
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: gestao_patrimonio_imobiliario
+      POSTGRES_USER: gestao_patrimonio
+      POSTGRES_PASSWORD: gestao_patrimonio
+
+    volumes:
+      - dados_postgres:/var/lib/postgresql/data
+
+    networks:
+      - gestao-patrimonio
+
+  backend:
+    build: .
+    container_name: gestao-patrimonio-backend
+    restart: unless-stopped
+
+    depends_on:
+      - banco
+
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://banco:5432/gestao_patrimonio_imobiliario
+      SPRING_DATASOURCE_USERNAME: gestao_patrimonio
+      SPRING_DATASOURCE_PASSWORD: gestao_patrimonio
+
+    ports:
+      - "8080:8080"
+
+    networks:
+      - gestao-patrimonio
+
+volumes:
+  dados_postgres:
+
+networks:
+  gestao-patrimonio:

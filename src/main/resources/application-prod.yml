@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: gestao-patrimonio-imobiliario
+  datasource:
+    url: jdbc:postgresql://localhost:5432/gestao_patrimonio_imobiliario
+    username: gestao_patrimonio
+    password: gestao_patrimonio
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+  cloud:
+    openfeign:
+      client:
+        config:
+          viaCepClient:
+            connectTimeout: 3000
+            readTimeout: 5000
+            loggerLevel: basic
+
+# Provedor externo de consulta de endereço por CEP.
+integracao:
+  viacep:
+    url: https://viacep.com.br/ws
+  # Serviço de push da Expo. access-token é opcional (defina EXPO_ACCESS_TOKEN
+  # se ativar "Enhanced Security for Push Notifications" no projeto Expo).
+  expo:
+    push-url: https://exp.host/--/api/v2/push/send
+    access-token: ${EXPO_ACCESS_TOKEN:}
+
+# Resumo diário de alertas por push (só dispara com a aplicação no ar).
+notificacao:
+  resumo-diario:
+    cron: "0 0 8 * * *"
