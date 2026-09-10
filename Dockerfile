@@ -1,8 +1,17 @@
+FROM maven:3.9-eclipse-temurin-17 AS compilacao
+
+WORKDIR /app
+
+COPY pom.xml .
+COPY src ./src
+
+RUN mvn clean package -DskipTests
+
 FROM eclipse-temurin:17-jre
 
 WORKDIR /app
 
-COPY target/*.jar app.jar
+COPY --from=compilacao /app/target/*.jar app.jar
 
 EXPOSE 8080
 

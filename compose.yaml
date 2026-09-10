@@ -26,7 +26,6 @@ services:
 
     environment:
       SPRING_PROFILES_ACTIVE: prod
-
       SPRING_DATASOURCE_URL: jdbc:postgresql://banco:5432/gestao_patrimonio_imobiliario
       SPRING_DATASOURCE_USERNAME: gestao_patrimonio
       SPRING_DATASOURCE_PASSWORD: gestao_patrimonio
