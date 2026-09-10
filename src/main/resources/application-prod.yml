@@ -2,9 +2,9 @@ spring:
   application:
     name: gestao-patrimonio-imobiliario
   datasource:
-    url: jdbc:postgresql://localhost:5432/gestao_patrimonio_imobiliario
-    username: gestao_patrimonio
-    password: gestao_patrimonio
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: validate
