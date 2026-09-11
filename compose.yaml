@@ -10,6 +10,9 @@ services:
       POSTGRES_USER: gestao_patrimonio
       POSTGRES_PASSWORD: gestao_patrimonio
 
+    ports:
+      - "5432:5432"
+
     volumes:
       - dados_postgres:/var/lib/postgresql/data
 
