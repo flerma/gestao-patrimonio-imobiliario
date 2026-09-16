@@ -1,8 +1,15 @@
 package com.techup.gestao_patrimonio_imobiliario.data.usuario;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UsuarioRepository extends JpaRepository<UsuarioEntity, UUID> {
+
+    Optional<UsuarioEntity> findByEmail(String email);
+
+    boolean existsByEmail(String email);
+
+    boolean existsByTelefone(String telefone);
 }

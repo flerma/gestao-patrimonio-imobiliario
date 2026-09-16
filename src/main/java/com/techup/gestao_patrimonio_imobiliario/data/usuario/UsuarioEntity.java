@@ -36,6 +36,12 @@ public class UsuarioEntity {
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 
+    @Column(name = "senha")
+    private String senha;
+
+    @Column(name = "telefone", unique = true)
+    private String telefone;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "provedor_autenticacao", nullable = false)
     private ProvedorAutenticacao provedorAutenticacao;

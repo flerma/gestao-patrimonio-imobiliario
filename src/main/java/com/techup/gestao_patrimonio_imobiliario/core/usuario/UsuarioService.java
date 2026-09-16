@@ -31,6 +31,7 @@ public class UsuarioService {
                 .id(UUID.randomUUID())
                 .nome(request.getNome())
                 .email(request.getEmail())
+                .telefone(request.getTelefone())
                 .provedorAutenticacao(request.getProvedorAutenticacao())
                 .idUsuarioProvedor(request.getIdUsuarioProvedor())
                 .status(request.getStatus() != null ? request.getStatus() : StatusUsuario.ATIVO)
@@ -60,6 +61,7 @@ public class UsuarioService {
         Usuario atualizado = existente
                 .withNome(request.getNome())
                 .withEmail(request.getEmail())
+                .withTelefone(request.getTelefone())
                 .withProvedorAutenticacao(request.getProvedorAutenticacao())
                 .withIdUsuarioProvedor(request.getIdUsuarioProvedor())
                 .withStatus(request.getStatus() != null ? request.getStatus() : existente.getStatus())

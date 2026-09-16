@@ -11,5 +11,7 @@
     <include file="db/changelog/005-add-endereco-to-inquilinos.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/006-create-table-pagamentos-aluguel.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/007-create-table-dispositivos-push.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/008-add-senha-telefone-usuarios.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/009-create-table-refresh-tokens.sql" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

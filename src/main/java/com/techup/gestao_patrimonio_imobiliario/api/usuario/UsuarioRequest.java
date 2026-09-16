@@ -20,6 +20,8 @@ public class UsuarioRequest {
     @Email
     String email;
 
+    String telefone;
+
     @NotNull
     ProvedorAutenticacao provedorAutenticacao;
 

@@ -20,6 +20,8 @@ public class Usuario {
     UUID id;
     String nome;
     String email;
+    String senha;
+    String telefone;
     ProvedorAutenticacao provedorAutenticacao;
     String idUsuarioProvedor;
     StatusUsuario status;

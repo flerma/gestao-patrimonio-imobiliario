@@ -19,6 +19,7 @@ public class UsuarioResponse {
     UUID id;
     String nome;
     String email;
+    String telefone;
     ProvedorAutenticacao provedorAutenticacao;
     String idUsuarioProvedor;
     StatusUsuario status;
@@ -33,6 +34,7 @@ public class UsuarioResponse {
                 .id(usuario.getId())
                 .nome(usuario.getNome())
                 .email(usuario.getEmail())
+                .telefone(usuario.getTelefone())
                 .provedorAutenticacao(usuario.getProvedorAutenticacao())
                 .idUsuarioProvedor(usuario.getIdUsuarioProvedor())
                 .status(usuario.getStatus())
