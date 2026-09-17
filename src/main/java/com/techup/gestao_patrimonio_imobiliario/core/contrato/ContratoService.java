@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.techup.gestao_patrimonio_imobiliario.api.contrato.ContratoRequest;
+import com.techup.gestao_patrimonio_imobiliario.core.auth.AutenticacaoAtual;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusContrato;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusImovel;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.TipoGarantia;
@@ -73,7 +74,7 @@ public class ContratoService {
 
     @Transactional(readOnly = true)
     public List<Contrato> listar() {
-        return contratoRepository.findAll().stream()
+        return contratoRepository.findAllByImovelUsuarioId(AutenticacaoAtual.usuarioId()).stream()
                 .map(ContratoMapper::toDomain)
                 .toList();
     }
@@ -126,6 +127,10 @@ public class ContratoService {
         }
     }
 
+    private boolean pertenceAoUsuarioAtual(UUID donoId) {
+        return donoId != null && donoId.equals(AutenticacaoAtual.usuarioId());
+    }
+
     /**
      * Quando um contrato passa a valer (status ATIVO), o imovel deixa de estar
      * disponivel e passa a constar como alugado. Nao mexe em imoveis de uso
@@ -156,18 +161,29 @@ public class ContratoService {
         }
     }
 
+    /** Busca o contrato garantindo que o imovel pertence ao usuario autenticado (404 caso contrario). */
     private ContratoEntity buscarContratoEntity(UUID id) {
-        return contratoRepository.findById(id)
+        return contratoRepository.findByIdAndImovelUsuarioId(id, AutenticacaoAtual.usuarioId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Contrato nao encontrado: " + id));
     }
 
+    /** Busca o imovel garantindo que pertence ao usuario autenticado (404 caso contrario). */
     private ImovelEntity buscarImovelEntity(UUID imovelId) {
-        return imovelRepository.findById(imovelId)
+        ImovelEntity imovel = imovelRepository.findById(imovelId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Imovel nao encontrado: " + imovelId));
+        if (!pertenceAoUsuarioAtual(imovel.getUsuario() != null ? imovel.getUsuario().getId() : null)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Imovel nao encontrado: " + imovelId);
+        }
+        return imovel;
     }
 
+    /** Busca o inquilino garantindo que pertence ao usuario autenticado (404 caso contrario). */
     private InquilinoEntity buscarInquilinoEntity(UUID inquilinoId) {
-        return inquilinoRepository.findById(inquilinoId)
+        InquilinoEntity inquilino = inquilinoRepository.findById(inquilinoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inquilino nao encontrado: " + inquilinoId));
+        if (!pertenceAoUsuarioAtual(inquilino.getUsuario() != null ? inquilino.getUsuario().getId() : null)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Inquilino nao encontrado: " + inquilinoId);
+        }
+        return inquilino;
     }
 }

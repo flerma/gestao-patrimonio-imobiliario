@@ -8,26 +8,6 @@ public final class InquilinoMapper {
     private InquilinoMapper() {
     }
 
-    public static InquilinoEntity toEntity(Inquilino inquilino) {
-        if (inquilino == null) {
-            return null;
-        }
-        return InquilinoEntity.builder()
-                .id(inquilino.getId())
-                .tipoPessoa(inquilino.getTipoPessoa())
-                .nome(inquilino.getNome())
-                .documento(inquilino.getDocumento())
-                .email(inquilino.getEmail())
-                .telefone(inquilino.getTelefone())
-                .dataNascimento(inquilino.getDataNascimento())
-                .endereco(EnderecoMapper.toEmbeddable(inquilino.getEndereco()))
-                .observacoes(inquilino.getObservacoes())
-                .status(inquilino.getStatus())
-                .dataCriacao(inquilino.getDataCriacao())
-                .dataAtualizacao(inquilino.getDataAtualizacao())
-                .build();
-    }
-
     public static Inquilino toDomain(InquilinoEntity entity) {
         if (entity == null) {
             return null;

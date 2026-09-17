@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.techup.gestao_patrimonio_imobiliario.api.imovel.ImovelRequest;
+import com.techup.gestao_patrimonio_imobiliario.core.auth.AutenticacaoAtual;
 import com.techup.gestao_patrimonio_imobiliario.data.endereco.EnderecoMapper;
 import com.techup.gestao_patrimonio_imobiliario.data.imovel.ImovelEntity;
 import com.techup.gestao_patrimonio_imobiliario.data.imovel.ImovelRepository;
@@ -30,7 +31,7 @@ public class ImovelService {
     }
 
     public Imovel criar(ImovelRequest request) {
-        UsuarioEntity usuarioEntity = buscarUsuarioEntity(request.getUsuarioId());
+        UsuarioEntity usuarioEntity = buscarUsuarioEntity(AutenticacaoAtual.usuarioId());
         LocalDateTime agora = LocalDateTime.now();
         ImovelEntity entity = ImovelEntity.builder()
                 .id(UUID.randomUUID())
@@ -49,7 +50,7 @@ public class ImovelService {
 
     @Transactional(readOnly = true)
     public List<Imovel> listar() {
-        return imovelRepository.findAll().stream()
+        return imovelRepository.findAllByUsuarioId(AutenticacaoAtual.usuarioId()).stream()
                 .map(ImovelMapper::toDomain)
                 .toList();
     }
@@ -61,8 +62,6 @@ public class ImovelService {
 
     public Imovel atualizar(UUID id, ImovelRequest request) {
         ImovelEntity existente = buscarImovelEntity(id);
-        UsuarioEntity usuarioEntity = buscarUsuarioEntity(request.getUsuarioId());
-        existente.setUsuario(usuarioEntity);
         existente.setNome(request.getNome());
         existente.setTipo(request.getTipo());
         existente.setStatus(request.getStatus());
@@ -74,14 +73,12 @@ public class ImovelService {
     }
 
     public void deletar(UUID id) {
-        if (!imovelRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Imovel nao encontrado: " + id);
-        }
-        imovelRepository.deleteById(id);
+        imovelRepository.delete(buscarImovelEntity(id));
     }
 
+    /** Busca o imovel garantindo que pertence ao usuario autenticado (404 caso contrario). */
     private ImovelEntity buscarImovelEntity(UUID id) {
-        return imovelRepository.findById(id)
+        return imovelRepository.findByIdAndUsuarioId(id, AutenticacaoAtual.usuarioId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Imovel nao encontrado: " + id));
     }
 

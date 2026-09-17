@@ -13,5 +13,6 @@
     <include file="db/changelog/007-create-table-dispositivos-push.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/008-add-senha-telefone-usuarios.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/009-create-table-refresh-tokens.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/010-add-usuario-to-inquilinos.sql" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

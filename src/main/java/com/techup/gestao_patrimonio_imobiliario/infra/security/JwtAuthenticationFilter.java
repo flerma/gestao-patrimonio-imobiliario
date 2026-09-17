@@ -2,6 +2,7 @@ package com.techup.gestao_patrimonio_imobiliario.infra.security;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.techup.gestao_patrimonio_imobiliario.core.auth.JwtService;
+import com.techup.gestao_patrimonio_imobiliario.core.auth.UsuarioPrincipal;
 
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -47,10 +49,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = header.substring(BEARER_PREFIX.length());
             try {
                 Claims claims = jwtService.validarEExtrairClaims(token);
-                String email = claims.get("email", String.class);
+                UsuarioPrincipal principal = new UsuarioPrincipal(
+                        UUID.fromString(claims.getSubject()),
+                        claims.get("email", String.class),
+                        claims.get("nome", String.class));
 
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        email,
+                        principal,
                         null,
                         List.of(new SimpleGrantedAuthority("ROLE_USER")));
                 SecurityContextHolder.getContext().setAuthentication(authentication);

@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.techup.gestao_patrimonio_imobiliario.api.pagamentoaluguel.PagamentoAluguelRequest;
 import com.techup.gestao_patrimonio_imobiliario.api.pagamentoaluguel.RegistrarPagamentoRequest;
+import com.techup.gestao_patrimonio_imobiliario.core.auth.AutenticacaoAtual;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusPagamentoAluguel;
 import com.techup.gestao_patrimonio_imobiliario.data.contrato.ContratoEntity;
 import com.techup.gestao_patrimonio_imobiliario.data.contrato.ContratoRepository;
@@ -99,9 +100,14 @@ public class PagamentoAluguelService {
 
     @Transactional(readOnly = true)
     public List<PagamentoAluguel> listar(UUID contratoId) {
-        List<PagamentoAluguelEntity> entidades = contratoId != null
-                ? pagamentoAluguelRepository.findByContratoIdOrderByCompetenciaAsc(contratoId)
-                : pagamentoAluguelRepository.findAllByOrderByDataVencimentoAsc();
+        List<PagamentoAluguelEntity> entidades;
+        if (contratoId != null) {
+            buscarContratoEntity(contratoId); // valida que o contrato pertence ao usuario autenticado
+            entidades = pagamentoAluguelRepository.findByContratoIdOrderByCompetenciaAsc(contratoId);
+        } else {
+            entidades = pagamentoAluguelRepository
+                    .findAllByContratoImovelUsuarioIdOrderByDataVencimentoAsc(AutenticacaoAtual.usuarioId());
+        }
         return entidades.stream()
                 .map(PagamentoAluguelMapper::toDomain)
                 .toList();
@@ -153,20 +159,26 @@ public class PagamentoAluguelService {
     }
 
     public void deletar(UUID id) {
-        if (!pagamentoAluguelRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pagamento de aluguel nao encontrado: " + id);
-        }
-        pagamentoAluguelRepository.deleteById(id);
+        pagamentoAluguelRepository.delete(buscarEntity(id));
     }
 
+    /** Busca o pagamento garantindo que o contrato pertence ao usuario autenticado (404 caso contrario). */
     private PagamentoAluguelEntity buscarEntity(UUID id) {
-        return pagamentoAluguelRepository.findById(id)
+        PagamentoAluguelEntity entity = pagamentoAluguelRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Pagamento de aluguel nao encontrado: " + id));
+        UUID donoId = entity.getContrato() != null && entity.getContrato().getImovel() != null
+                ? entity.getContrato().getImovel().getUsuario().getId()
+                : null;
+        if (!AutenticacaoAtual.usuarioId().equals(donoId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pagamento de aluguel nao encontrado: " + id);
+        }
+        return entity;
     }
 
+    /** Busca o contrato garantindo que o imovel pertence ao usuario autenticado (404 caso contrario). */
     private ContratoEntity buscarContratoEntity(UUID contratoId) {
-        return contratoRepository.findById(contratoId)
+        return contratoRepository.findByIdAndImovelUsuarioId(contratoId, AutenticacaoAtual.usuarioId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Contrato nao encontrado: " + contratoId));
     }

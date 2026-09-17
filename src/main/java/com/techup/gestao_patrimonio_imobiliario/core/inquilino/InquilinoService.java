@@ -10,76 +10,87 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.techup.gestao_patrimonio_imobiliario.api.inquilino.InquilinoRequest;
+import com.techup.gestao_patrimonio_imobiliario.core.auth.AutenticacaoAtual;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusInquilino;
+import com.techup.gestao_patrimonio_imobiliario.data.endereco.EnderecoMapper;
 import com.techup.gestao_patrimonio_imobiliario.data.inquilino.InquilinoEntity;
 import com.techup.gestao_patrimonio_imobiliario.data.inquilino.InquilinoRepository;
 import com.techup.gestao_patrimonio_imobiliario.data.inquilino.InquilinoMapper;
+import com.techup.gestao_patrimonio_imobiliario.data.usuario.UsuarioEntity;
+import com.techup.gestao_patrimonio_imobiliario.data.usuario.UsuarioRepository;
 
 @Service
 @Transactional
 public class InquilinoService {
 
     private final InquilinoRepository inquilinoRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    public InquilinoService(InquilinoRepository inquilinoRepository) {
+    public InquilinoService(InquilinoRepository inquilinoRepository, UsuarioRepository usuarioRepository) {
         this.inquilinoRepository = inquilinoRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     public Inquilino criar(InquilinoRequest request) {
+        UsuarioEntity usuarioEntity = buscarUsuarioEntity(AutenticacaoAtual.usuarioId());
         LocalDateTime agora = LocalDateTime.now();
-        Inquilino inquilino = Inquilino.builder()
+        InquilinoEntity entity = InquilinoEntity.builder()
                 .id(UUID.randomUUID())
+                .usuario(usuarioEntity)
                 .tipoPessoa(request.getTipoPessoa())
                 .nome(request.getNome())
                 .documento(request.getDocumento())
                 .email(request.getEmail())
                 .telefone(request.getTelefone())
                 .dataNascimento(request.getDataNascimento())
-                .endereco(request.getEndereco())
+                .endereco(EnderecoMapper.toEmbeddable(request.getEndereco()))
                 .observacoes(request.getObservacoes())
                 .status(request.getStatus() != null ? request.getStatus() : StatusInquilino.ATIVO)
                 .dataCriacao(agora)
                 .dataAtualizacao(agora)
                 .build();
-        InquilinoEntity salvo = inquilinoRepository.save(InquilinoMapper.toEntity(inquilino));
-        return InquilinoMapper.toDomain(salvo);
+        return InquilinoMapper.toDomain(inquilinoRepository.save(entity));
     }
 
     @Transactional(readOnly = true)
     public List<Inquilino> listar() {
-        return inquilinoRepository.findAll().stream()
+        return inquilinoRepository.findAllByUsuarioId(AutenticacaoAtual.usuarioId()).stream()
                 .map(InquilinoMapper::toDomain)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public Inquilino buscarPorId(UUID id) {
-        return inquilinoRepository.findById(id)
-                .map(InquilinoMapper::toDomain)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inquilino nao encontrado: " + id));
+        return InquilinoMapper.toDomain(buscarInquilinoEntity(id));
     }
 
     public Inquilino atualizar(UUID id, InquilinoRequest request) {
-        Inquilino existente = buscarPorId(id);
-        Inquilino atualizado = existente
-                .withTipoPessoa(request.getTipoPessoa())
-                .withNome(request.getNome())
-                .withDocumento(request.getDocumento())
-                .withEmail(request.getEmail())
-                .withTelefone(request.getTelefone())
-                .withDataNascimento(request.getDataNascimento())
-                .withEndereco(request.getEndereco())
-                .withObservacoes(request.getObservacoes())
-                .withStatus(request.getStatus() != null ? request.getStatus() : existente.getStatus())
-                .withDataAtualizacao(LocalDateTime.now());
-        InquilinoEntity salvo = inquilinoRepository.save(InquilinoMapper.toEntity(atualizado));
-        return InquilinoMapper.toDomain(salvo);
+        InquilinoEntity existente = buscarInquilinoEntity(id);
+        existente.setTipoPessoa(request.getTipoPessoa());
+        existente.setNome(request.getNome());
+        existente.setDocumento(request.getDocumento());
+        existente.setEmail(request.getEmail());
+        existente.setTelefone(request.getTelefone());
+        existente.setDataNascimento(request.getDataNascimento());
+        existente.setEndereco(EnderecoMapper.toEmbeddable(request.getEndereco()));
+        existente.setObservacoes(request.getObservacoes());
+        existente.setStatus(request.getStatus() != null ? request.getStatus() : existente.getStatus());
+        existente.setDataAtualizacao(LocalDateTime.now());
+        return InquilinoMapper.toDomain(inquilinoRepository.save(existente));
     }
 
     public void deletar(UUID id) {
-        if (!inquilinoRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Inquilino nao encontrado: " + id);
-        }
-        inquilinoRepository.deleteById(id);
+        inquilinoRepository.delete(buscarInquilinoEntity(id));
+    }
+
+    /** Busca o inquilino garantindo que pertence ao usuario autenticado (404 caso contrario). */
+    private InquilinoEntity buscarInquilinoEntity(UUID id) {
+        return inquilinoRepository.findByIdAndUsuarioId(id, AutenticacaoAtual.usuarioId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inquilino nao encontrado: " + id));
+    }
+
+    private UsuarioEntity buscarUsuarioEntity(UUID usuarioId) {
+        return usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontrado: " + usuarioId));
     }
 }

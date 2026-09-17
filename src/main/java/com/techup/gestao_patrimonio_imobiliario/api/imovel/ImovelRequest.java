@@ -1,7 +1,6 @@
 package com.techup.gestao_patrimonio_imobiliario.api.imovel;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 import com.techup.gestao_patrimonio_imobiliario.core.endereco.Endereco;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusImovel;
@@ -16,9 +15,6 @@ import lombok.Value;
 @Value
 @Builder
 public class ImovelRequest {
-
-    @NotNull
-    UUID usuarioId;
 
     @NotBlank
     String nome;
