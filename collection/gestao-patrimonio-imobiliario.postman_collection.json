@@ -726,7 +726,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"valorPago\": 2500.00,\n  \"dataPagamento\": \"2026-09-10\",\n  \"formaPagamento\": \"PIX\",\n  \"observacoes\": \"Pago via PIX\"\n}"
+              "raw": "{\n  \"dataPagamento\": \"2026-09-10\",\n  \"formaPagamento\": \"PIX\",\n  \"observacoes\": \"Pago via PIX\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/pagamentos-aluguel/{{pagamentoId}}/registrar-pagamento",
@@ -740,37 +740,7 @@
                 "registrar-pagamento"
               ]
             },
-            "description": "Registra o recebimento e recalcula o status:\n- saldo em aberto -> PAGO_PARCIALMENTE\n- quitado no prazo -> PAGO\n- quitado após o vencimento -> PAGO_COM_ATRASO\n\n`dataPagamento` é opcional (assume a data atual). `formaPagamento`: PIX | TRANSFERENCIA | BOLETO | DINHEIRO | CARTAO | CHEQUE | OUTRA."
-          },
-          "response": []
-        },
-        {
-          "name": "Registrar pagamento parcial",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"valorPago\": 2300.00,\n  \"dataPagamento\": \"2026-09-10\",\n  \"formaPagamento\": \"TRANSFERENCIA\",\n  \"observacoes\": \"Pagamento parcial - saldo de R$ 200,00\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/pagamentos-aluguel/{{pagamentoId}}/registrar-pagamento",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "pagamentos-aluguel",
-                "{{pagamentoId}}",
-                "registrar-pagamento"
-              ]
-            },
-            "description": "Exemplo de pagamento parcial: valorPrevisto 2500 e valorPago 2300 resultam em status PAGO_PARCIALMENTE e saldo 200."
+            "description": "Marca a cobrança como quitada integralmente: valorPago = valorPrevisto e status = PAGO, sempre (mesmo se dataPagamento for após o vencimento). `dataPagamento` e `formaPagamento` são obrigatórios. `formaPagamento`: PIX | TRANSFERENCIA | BOLETO | DINHEIRO | CARTAO | CHEQUE | OUTRA."
           },
           "response": []
         },

@@ -1,6 +1,5 @@
 package com.techup.gestao_patrimonio_imobiliario.core.pagamentoaluguel;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -135,25 +134,19 @@ public class PagamentoAluguelService {
     }
 
     /**
-     * Registra o recebimento e recalcula o status conforme a regra de dominio
-     * (PAGO / PAGO_COM_ATRASO / PAGO_PARCIALMENTE).
+     * Marca a cobranca como quitada integralmente: valorPago = valorPrevisto,
+     * status = PAGO, com a data e forma de pagamento informadas.
      */
     public PagamentoAluguel registrarPagamento(UUID id, RegistrarPagamentoRequest request) {
         PagamentoAluguelEntity existente = buscarEntity(id);
-        LocalDate dataPagamento = request.getDataPagamento() != null ? request.getDataPagamento() : LocalDate.now();
 
-        PagamentoAluguel comPagamento = PagamentoAluguelMapper.toDomain(existente)
-                .withValorPago(request.getValorPago())
-                .withDataPagamento(dataPagamento)
-                .withFormaPagamento(request.getFormaPagamento());
-
-        existente.setValorPago(request.getValorPago());
-        existente.setDataPagamento(dataPagamento);
+        existente.setValorPago(existente.getValorPrevisto());
+        existente.setDataPagamento(request.getDataPagamento());
         existente.setFormaPagamento(request.getFormaPagamento());
+        existente.setStatus(StatusPagamentoAluguel.PAGO);
         if (request.getObservacoes() != null) {
             existente.setObservacoes(request.getObservacoes());
         }
-        existente.setStatus(comPagamento.resolverStatusAposPagamento());
         existente.setDataAtualizacao(LocalDateTime.now());
         return PagamentoAluguelMapper.toDomain(pagamentoAluguelRepository.save(existente));
     }

@@ -43,10 +43,6 @@ public class PagamentoAluguel {
         return valorPrevisto.subtract(pago);
     }
 
-    public boolean estaQuitado() {
-        return calcularSaldo().signum() <= 0;
-    }
-
     /**
      * Regra de dominio: um pagamento esta em atraso quando ainda ha saldo em aberto
      * (nao pago ou pago parcialmente) e a data de vencimento ja passou. Nao depende
@@ -68,23 +64,5 @@ public class PagamentoAluguel {
      */
     public StatusPagamentoAluguel statusEfetivo(LocalDate dataAtual) {
         return estaEmAtraso(dataAtual) ? StatusPagamentoAluguel.EM_ATRASO : status;
-    }
-
-    /**
-     * Determina o status apos o registro de um pagamento:
-     * - saldo em aberto  => PAGO_PARCIALMENTE
-     * - quitado no prazo  => PAGO
-     * - quitado com atraso => PAGO_COM_ATRASO
-     */
-    public StatusPagamentoAluguel resolverStatusAposPagamento() {
-        if (valorPago == null || dataPagamento == null) {
-            return status;
-        }
-        if (!estaQuitado()) {
-            return StatusPagamentoAluguel.PAGO_PARCIALMENTE;
-        }
-        return dataPagamento.isAfter(dataVencimento)
-                ? StatusPagamentoAluguel.PAGO_COM_ATRASO
-                : StatusPagamentoAluguel.PAGO;
     }
 }
