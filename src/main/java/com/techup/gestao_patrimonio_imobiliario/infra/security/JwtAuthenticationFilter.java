@@ -12,6 +12,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.techup.gestao_patrimonio_imobiliario.core.auth.JwtService;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.UsuarioPrincipal;
+import com.techup.gestao_patrimonio_imobiliario.core.enums.RoleUsuario;
 
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -49,15 +50,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = header.substring(BEARER_PREFIX.length());
             try {
                 Claims claims = jwtService.validarEExtrairClaims(token);
+                RoleUsuario role = RoleUsuario.valueOf(claims.get("role", String.class));
                 UsuarioPrincipal principal = new UsuarioPrincipal(
                         UUID.fromString(claims.getSubject()),
                         claims.get("email", String.class),
-                        claims.get("nome", String.class));
+                        claims.get("nome", String.class),
+                        role);
 
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         principal,
                         null,
-                        List.of(new SimpleGrantedAuthority("ROLE_USER")));
+                        List.of(new SimpleGrantedAuthority("ROLE_" + role.name())));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (RuntimeException e) {
                 // Token ausente/inválido/expirado: segue sem autenticar, deixa o

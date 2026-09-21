@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.techup.gestao_patrimonio_imobiliario.core.enums.ProvedorAutenticacao;
+import com.techup.gestao_patrimonio_imobiliario.core.enums.RoleUsuario;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusUsuario;
 import com.techup.gestao_patrimonio_imobiliario.core.usuario.Usuario;
 
@@ -23,6 +24,7 @@ public class UsuarioResponse {
     ProvedorAutenticacao provedorAutenticacao;
     String idUsuarioProvedor;
     StatusUsuario status;
+    RoleUsuario role;
     LocalDateTime dataCriacao;
     LocalDateTime dataAtualizacao;
 
@@ -38,6 +40,7 @@ public class UsuarioResponse {
                 .provedorAutenticacao(usuario.getProvedorAutenticacao())
                 .idUsuarioProvedor(usuario.getIdUsuarioProvedor())
                 .status(usuario.getStatus())
+                .role(usuario.getRole())
                 .dataCriacao(usuario.getDataCriacao())
                 .dataAtualizacao(usuario.getDataAtualizacao())
                 .build();

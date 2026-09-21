@@ -20,6 +20,7 @@ public final class UsuarioMapper {
                 .provedorAutenticacao(usuario.getProvedorAutenticacao())
                 .idUsuarioProvedor(usuario.getIdUsuarioProvedor())
                 .status(usuario.getStatus())
+                .role(usuario.getRole())
                 .dataCriacao(usuario.getDataCriacao())
                 .dataAtualizacao(usuario.getDataAtualizacao())
                 .build();
@@ -38,6 +39,7 @@ public final class UsuarioMapper {
                 .provedorAutenticacao(entity.getProvedorAutenticacao())
                 .idUsuarioProvedor(entity.getIdUsuarioProvedor())
                 .status(entity.getStatus())
+                .role(entity.getRole())
                 .dataCriacao(entity.getDataCriacao())
                 .dataAtualizacao(entity.getDataAtualizacao())
                 .build();

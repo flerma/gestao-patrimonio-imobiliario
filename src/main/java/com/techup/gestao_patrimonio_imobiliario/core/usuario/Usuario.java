@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.techup.gestao_patrimonio_imobiliario.core.enums.ProvedorAutenticacao;
+import com.techup.gestao_patrimonio_imobiliario.core.enums.RoleUsuario;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusUsuario;
 
 import lombok.Builder;
@@ -25,6 +26,7 @@ public class Usuario {
     ProvedorAutenticacao provedorAutenticacao;
     String idUsuarioProvedor;
     StatusUsuario status;
+    RoleUsuario role;
     LocalDateTime dataCriacao;
     LocalDateTime dataAtualizacao;
 }

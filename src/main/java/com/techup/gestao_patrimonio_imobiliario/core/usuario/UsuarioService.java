@@ -35,6 +35,7 @@ public class UsuarioService {
                 .provedorAutenticacao(request.getProvedorAutenticacao())
                 .idUsuarioProvedor(request.getIdUsuarioProvedor())
                 .status(request.getStatus() != null ? request.getStatus() : StatusUsuario.ATIVO)
+                .role(request.getRole())
                 .dataCriacao(agora)
                 .dataAtualizacao(agora)
                 .build();
@@ -65,6 +66,7 @@ public class UsuarioService {
                 .withProvedorAutenticacao(request.getProvedorAutenticacao())
                 .withIdUsuarioProvedor(request.getIdUsuarioProvedor())
                 .withStatus(request.getStatus() != null ? request.getStatus() : existente.getStatus())
+                .withRole(request.getRole())
                 .withDataAtualizacao(LocalDateTime.now());
         UsuarioEntity salvo = usuarioRepository.save(UsuarioMapper.toEntity(atualizado));
         return UsuarioMapper.toDomain(salvo);

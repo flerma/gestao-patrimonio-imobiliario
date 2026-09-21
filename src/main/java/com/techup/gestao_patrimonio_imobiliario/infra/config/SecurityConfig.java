@@ -41,6 +41,9 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/error")
                         .permitAll()
+                        // Gestao de usuarios (listar/criar/editar/excluir) e exclusiva de ADMIN -
+                        // um USUARIO comum nao tem motivo legitimo para ver ou mexer em outras contas.
+                        .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 // Sem isso, o Spring Security usa o default (Http403ForbiddenEntryPoint)
                 // para qualquer requisicao sem autenticacao valida - o front-end e o

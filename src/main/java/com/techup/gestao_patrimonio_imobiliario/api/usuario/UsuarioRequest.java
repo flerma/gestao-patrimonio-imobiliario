@@ -1,6 +1,7 @@
 package com.techup.gestao_patrimonio_imobiliario.api.usuario;
 
 import com.techup.gestao_patrimonio_imobiliario.core.enums.ProvedorAutenticacao;
+import com.techup.gestao_patrimonio_imobiliario.core.enums.RoleUsuario;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusUsuario;
 
 import jakarta.validation.constraints.Email;
@@ -28,4 +29,7 @@ public class UsuarioRequest {
     String idUsuarioProvedor;
 
     StatusUsuario status;
+
+    @NotNull
+    RoleUsuario role;
 }

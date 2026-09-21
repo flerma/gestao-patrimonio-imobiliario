@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.techup.gestao_patrimonio_imobiliario.core.enums.ProvedorAutenticacao;
+import com.techup.gestao_patrimonio_imobiliario.core.enums.RoleUsuario;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusUsuario;
 import com.techup.gestao_patrimonio_imobiliario.core.usuario.Usuario;
 import com.techup.gestao_patrimonio_imobiliario.data.auth.RefreshTokenEntity;
@@ -90,6 +91,9 @@ public class AuthService {
                 .senha(passwordEncoder.encode(senha))
                 .provedorAutenticacao(ProvedorAutenticacao.LOCAL)
                 .status(StatusUsuario.ATIVO)
+                // Autocadastro nunca cria ADMIN - so um ADMIN pode promover alguem
+                // a ADMIN, via tela de gestao de usuarios (UsuarioController).
+                .role(RoleUsuario.USUARIO)
                 .dataCriacao(agora)
                 .dataAtualizacao(agora)
                 .build();

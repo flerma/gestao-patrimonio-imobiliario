@@ -35,6 +35,7 @@ public class UsuarioDetailsService implements UserDetailsService {
         return new User(
                 usuario.getEmail(),
                 usuario.getSenha() != null ? usuario.getSenha() : "",
-                List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER")));
+                List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                        "ROLE_" + usuario.getRole().name())));
     }
 }

@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.techup.gestao_patrimonio_imobiliario.core.enums.ProvedorAutenticacao;
+import com.techup.gestao_patrimonio_imobiliario.core.enums.RoleUsuario;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusUsuario;
 
 import jakarta.persistence.Column;
@@ -52,6 +53,10 @@ public class UsuarioEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private StatusUsuario status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private RoleUsuario role;
 
     @Column(name = "data_criacao", nullable = false)
     private LocalDateTime dataCriacao;
