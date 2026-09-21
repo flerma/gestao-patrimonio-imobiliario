@@ -16,4 +16,10 @@ public interface PagamentoAluguelRepository extends JpaRepository<PagamentoAlugu
     boolean existsByContratoIdAndCompetencia(UUID contratoId, java.time.LocalDate competencia);
 
     void deleteByContratoId(UUID contratoId);
+
+    /** Remove cobrancas de competencia anterior ao mes informado (novo inicio de vigencia). */
+    void deleteByContratoIdAndCompetenciaBefore(UUID contratoId, java.time.LocalDate competencia);
+
+    /** Remove cobrancas de competencia posterior ao mes informado (novo fim de vigencia). */
+    void deleteByContratoIdAndCompetenciaAfter(UUID contratoId, java.time.LocalDate competencia);
 }

@@ -114,6 +114,7 @@ public class ContratoService {
         if (imovelAnterior != null && !imovelAnterior.getId().equals(imovelEntity.getId())) {
             liberarImovelSeSemContratoAtivo(imovelAnterior, salvo.getId());
         }
+        pagamentoAluguelService.reconciliarParaContrato(salvo);
         return ContratoMapper.toDomain(salvo);
     }
 

@@ -77,6 +77,30 @@ public class PagamentoAluguelService {
         pagamentoAluguelRepository.deleteByContratoId(contratoId);
     }
 
+    /**
+     * Reconcilia a serie de cobrancas apos uma alteracao na vigencia do
+     * contrato (dataInicio/dataFim):
+     * <ul>
+     *   <li>gera (via {@link #gerarParaContrato}, idempotente) as competencias
+     *       que passaram a fazer parte do periodo - cobre tanto adiantar o
+     *       inicio quanto prorrogar o fim;</li>
+     *   <li>remove as cobrancas cuja competencia ficou fora do novo periodo -
+     *       tanto as anteriores ao novo inicio quanto as posteriores ao novo
+     *       fim - mesmo que ja estejam pagas, espelhando o comportamento ja
+     *       existente de excluir o contrato inteiro.</li>
+     * </ul>
+     */
+    public void reconciliarParaContrato(ContratoEntity contrato) {
+        if (contrato.getDataInicio() == null || contrato.getDataFim() == null) {
+            return;
+        }
+        gerarParaContrato(contrato);
+        pagamentoAluguelRepository.deleteByContratoIdAndCompetenciaBefore(
+                contrato.getId(), YearMonth.from(contrato.getDataInicio()).atDay(1));
+        pagamentoAluguelRepository.deleteByContratoIdAndCompetenciaAfter(
+                contrato.getId(), YearMonth.from(contrato.getDataFim()).atDay(1));
+    }
+
     public PagamentoAluguel criar(PagamentoAluguelRequest request) {
         ContratoEntity contrato = buscarContratoEntity(request.getContratoId());
         LocalDateTime agora = LocalDateTime.now();
