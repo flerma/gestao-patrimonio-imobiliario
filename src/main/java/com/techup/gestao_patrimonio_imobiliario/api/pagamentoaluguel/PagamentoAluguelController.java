@@ -41,7 +41,8 @@ public class PagamentoAluguelController {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Pagamento criado com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados invalidos", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Contrato nao encontrado", content = @Content)
+            @ApiResponse(responseCode = "404", description = "Contrato nao encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Ja existe um pagamento para essa competencia", content = @Content)
     })
     public ResponseEntity<PagamentoAluguelResponse> criar(@Valid @RequestBody PagamentoAluguelRequest request) {
         PagamentoAluguel pagamento = pagamentoAluguelService.criar(request);

@@ -103,6 +103,11 @@ public class PagamentoAluguelService {
 
     public PagamentoAluguel criar(PagamentoAluguelRequest request) {
         ContratoEntity contrato = buscarContratoEntity(request.getContratoId());
+        if (pagamentoAluguelRepository.existsByContratoIdAndCompetencia(
+                contrato.getId(), request.getCompetencia().atDay(1))) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Ja existe um aluguel cadastrado para essa competencia neste contrato.");
+        }
         LocalDateTime agora = LocalDateTime.now();
         PagamentoAluguelEntity entity = PagamentoAluguelEntity.builder()
                 .id(UUID.randomUUID())
