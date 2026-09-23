@@ -1,5 +1,6 @@
 package com.techup.gestao_patrimonio_imobiliario.core.pagamentoaluguel;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.techup.gestao_patrimonio_imobiliario.api.pagamentoaluguel.PagamentoAluguelRequest;
 import com.techup.gestao_patrimonio_imobiliario.api.pagamentoaluguel.RegistrarPagamentoRequest;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.AutenticacaoAtual;
+import com.techup.gestao_patrimonio_imobiliario.core.enums.FormaPagamento;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusPagamentoAluguel;
 import com.techup.gestao_patrimonio_imobiliario.data.contrato.ContratoEntity;
 import com.techup.gestao_patrimonio_imobiliario.data.contrato.ContratoRepository;
@@ -41,8 +43,15 @@ public class PagamentoAluguelService {
      * Idempotente: competencias ja existentes para o contrato sao ignoradas.
      * Contrato sem data de fim (vigencia por prazo indeterminado) gera 12
      * competencias a partir do mes de inicio.
+     *
+     * <p>Competencias anteriores ao mes atual nascem, por padrao, PENDENTE
+     * (e portanto em atraso, ja que o vencimento ja passou). Quando
+     * {@code marcarAnterioresPagas} e true, essas competencias passadas
+     * nascem ja quitadas: PAGO, valorPago = valorAluguel, dataPagamento =
+     * a propria dataVencimento da parcela, formaPagamento = PIX. So afeta
+     * competencias sendo criadas agora - nao altera parcelas ja existentes.
      */
-    public List<PagamentoAluguel> gerarParaContrato(ContratoEntity contrato) {
+    public List<PagamentoAluguel> gerarParaContrato(ContratoEntity contrato, boolean marcarAnterioresPagas) {
         if (contrato.getDataInicio() == null) {
             return List.of();
         }
@@ -53,19 +62,25 @@ public class PagamentoAluguelService {
         }
 
         LocalDateTime agora = LocalDateTime.now();
+        YearMonth mesAtual = YearMonth.now();
         List<PagamentoAluguelEntity> novos = new ArrayList<>();
         for (YearMonth competencia = primeira; !competencia.isAfter(ultima); competencia = competencia.plusMonths(1)) {
             if (pagamentoAluguelRepository.existsByContratoIdAndCompetencia(contrato.getId(), competencia.atDay(1))) {
                 continue;
             }
             int dia = Math.min(contrato.getDiaVencimento(), competencia.lengthOfMonth());
+            LocalDate dataVencimento = competencia.atDay(dia);
+            boolean quitarComoPaga = marcarAnterioresPagas && competencia.isBefore(mesAtual);
             novos.add(PagamentoAluguelEntity.builder()
                     .id(UUID.randomUUID())
                     .contrato(contrato)
                     .competencia(competencia.atDay(1))
-                    .dataVencimento(competencia.atDay(dia))
+                    .dataVencimento(dataVencimento)
                     .valorPrevisto(contrato.getValorAluguel())
-                    .status(StatusPagamentoAluguel.PENDENTE)
+                    .valorPago(quitarComoPaga ? contrato.getValorAluguel() : null)
+                    .dataPagamento(quitarComoPaga ? dataVencimento : null)
+                    .formaPagamento(quitarComoPaga ? FormaPagamento.PIX : null)
+                    .status(quitarComoPaga ? StatusPagamentoAluguel.PAGO : StatusPagamentoAluguel.PENDENTE)
                     .dataCriacao(agora)
                     .dataAtualizacao(agora)
                     .build());
@@ -92,11 +107,11 @@ public class PagamentoAluguelService {
      *       existente de excluir o contrato inteiro.</li>
      * </ul>
      */
-    public void reconciliarParaContrato(ContratoEntity contrato) {
+    public void reconciliarParaContrato(ContratoEntity contrato, boolean marcarAnterioresPagas) {
         if (contrato.getDataInicio() == null) {
             return;
         }
-        gerarParaContrato(contrato);
+        gerarParaContrato(contrato, marcarAnterioresPagas);
         pagamentoAluguelRepository.deleteByContratoIdAndCompetenciaBefore(
                 contrato.getId(), YearMonth.from(contrato.getDataInicio()).atDay(1));
         pagamentoAluguelRepository.deleteByContratoIdAndCompetenciaAfter(

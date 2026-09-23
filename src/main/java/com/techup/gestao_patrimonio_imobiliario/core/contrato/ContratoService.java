@@ -68,7 +68,8 @@ public class ContratoService {
                 .build();
         ContratoEntity salvo = contratoRepository.save(entity);
         marcarImovelComoAlugadoSeAplicavel(imovelEntity, statusContrato);
-        pagamentoAluguelService.gerarParaContrato(salvo);
+        pagamentoAluguelService.gerarParaContrato(
+                salvo, Boolean.TRUE.equals(request.getMarcarParcelasAnterioresComoPagas()));
         return ContratoMapper.toDomain(salvo);
     }
 
@@ -114,7 +115,8 @@ public class ContratoService {
         if (imovelAnterior != null && !imovelAnterior.getId().equals(imovelEntity.getId())) {
             liberarImovelSeSemContratoAtivo(imovelAnterior, salvo.getId());
         }
-        pagamentoAluguelService.reconciliarParaContrato(salvo);
+        pagamentoAluguelService.reconciliarParaContrato(
+                salvo, Boolean.TRUE.equals(request.getMarcarParcelasAnterioresComoPagas()));
         return ContratoMapper.toDomain(salvo);
     }
 

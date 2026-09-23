@@ -60,4 +60,12 @@ public class ContratoRequest {
     BigDecimal valorGarantia;
 
     String observacoes;
+
+    /**
+     * Quando a data de inicio de vigencia gerar parcelas com competencia
+     * anterior ao mes atual, define se essas parcelas (as recem-criadas
+     * nesta chamada) devem nascer ja quitadas (PIX, na data de vencimento de
+     * cada uma) em vez de pendentes/em atraso. Nulo equivale a false.
+     */
+    Boolean marcarParcelasAnterioresComoPagas;
 }
