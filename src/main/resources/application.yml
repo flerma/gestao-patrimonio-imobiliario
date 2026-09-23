@@ -20,11 +20,18 @@ spring:
             connectTimeout: 3000
             readTimeout: 5000
             loggerLevel: basic
+          ibgeClient:
+            connectTimeout: 3000
+            readTimeout: 5000
+            loggerLevel: basic
 
 # Provedor externo de consulta de endereço por CEP.
 integracao:
   viacep:
     url: https://viacep.com.br/ws
+  # Provedor externo de consulta de municípios por UF.
+  ibge:
+    url: https://servicodados.ibge.gov.br/api/v1/localidades
   # Serviço de push da Expo. access-token é opcional (defina EXPO_ACCESS_TOKEN
   # se ativar "Enhanced Security for Push Notifications" no projeto Expo).
   expo:
