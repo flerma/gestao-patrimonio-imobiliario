@@ -50,12 +50,18 @@ public class PagamentoAluguelService {
      * nascem ja quitadas: PAGO, valorPago = valorAluguel, dataPagamento =
      * a propria dataVencimento da parcela, formaPagamento = PIX. So afeta
      * competencias sendo criadas agora - nao altera parcelas ja existentes.
+     *
+     * <p>Se o vencimento do mes de inicio (dia configurado) cair antes da
+     * propria data de inicio - ex.: contrato comecando dia 15 com
+     * vencimento todo dia 10 - a primeira parcela nao pode ser esse mes (o
+     * vencimento seria anterior ao inicio da vigencia); a serie comeca no
+     * mes seguinte. Ver {@link #competenciaInicial}.
      */
     public List<PagamentoAluguel> gerarParaContrato(ContratoEntity contrato, boolean marcarAnterioresPagas) {
         if (contrato.getDataInicio() == null) {
             return List.of();
         }
-        YearMonth primeira = YearMonth.from(contrato.getDataInicio());
+        YearMonth primeira = competenciaInicial(contrato);
         YearMonth ultima = competenciaFinal(contrato);
         if (ultima.isBefore(primeira)) {
             return List.of();
@@ -113,9 +119,26 @@ public class PagamentoAluguelService {
         }
         gerarParaContrato(contrato, marcarAnterioresPagas);
         pagamentoAluguelRepository.deleteByContratoIdAndCompetenciaBefore(
-                contrato.getId(), YearMonth.from(contrato.getDataInicio()).atDay(1));
+                contrato.getId(), competenciaInicial(contrato).atDay(1));
         pagamentoAluguelRepository.deleteByContratoIdAndCompetenciaAfter(
                 contrato.getId(), competenciaFinal(contrato).atDay(1));
+    }
+
+    /**
+     * Primeira competencia efetiva do contrato: o mes de inicio, a menos que
+     * o vencimento desse mes (dia configurado, clampado ao tamanho do mes)
+     * caia antes da propria data de inicio - nesse caso comeca no mes
+     * seguinte. Ex.: contrato com inicio dia 15 e vencimento todo dia 10: o
+     * vencimento do mes de inicio seria dia 10, antes do inquilino sequer
+     * ter comecado o contrato, entao a primeira parcela e a do mes seguinte.
+     */
+    private YearMonth competenciaInicial(ContratoEntity contrato) {
+        YearMonth mesInicio = YearMonth.from(contrato.getDataInicio());
+        int dia = Math.min(contrato.getDiaVencimento(), mesInicio.lengthOfMonth());
+        LocalDate vencimentoMesInicio = mesInicio.atDay(dia);
+        return vencimentoMesInicio.isBefore(contrato.getDataInicio())
+                ? mesInicio.plusMonths(1)
+                : mesInicio;
     }
 
     /**
@@ -125,7 +148,7 @@ public class PagamentoAluguelService {
     private YearMonth competenciaFinal(ContratoEntity contrato) {
         return contrato.getDataFim() != null
                 ? YearMonth.from(contrato.getDataFim())
-                : YearMonth.from(contrato.getDataInicio()).plusMonths(11);
+                : competenciaInicial(contrato).plusMonths(11);
     }
 
     public PagamentoAluguel criar(PagamentoAluguelRequest request) {
