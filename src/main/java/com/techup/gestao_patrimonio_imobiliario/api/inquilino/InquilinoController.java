@@ -38,7 +38,8 @@ public class InquilinoController {
     @Operation(summary = "Criar inquilino", description = "Cadastra um novo inquilino e retorna o recurso criado.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Inquilino criado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content),
+            @ApiResponse(responseCode = "409", description = "CPF/CNPJ já cadastrado", content = @Content)
     })
     public ResponseEntity<InquilinoResponse> criar(@Valid @RequestBody InquilinoRequest request) {
         Inquilino inquilino = inquilinoService.criar(request);
@@ -70,7 +71,8 @@ public class InquilinoController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Inquilino atualizado com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Inquilino não encontrado", content = @Content)
+            @ApiResponse(responseCode = "404", description = "Inquilino não encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "CPF/CNPJ já cadastrado", content = @Content)
     })
     public InquilinoResponse atualizar(
             @Parameter(description = "Identificador do inquilino", required = true) @PathVariable UUID id,

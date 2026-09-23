@@ -39,13 +39,15 @@ public class PagamentoAluguelService {
      * do mes de inicio ao mes de fim do contrato, com vencimento no dia configurado
      * em {@code diaVencimento} (ajustado para o ultimo dia quando o mes for mais curto).
      * Idempotente: competencias ja existentes para o contrato sao ignoradas.
+     * Contrato sem data de fim (vigencia por prazo indeterminado) gera 12
+     * competencias a partir do mes de inicio.
      */
     public List<PagamentoAluguel> gerarParaContrato(ContratoEntity contrato) {
-        if (contrato.getDataInicio() == null || contrato.getDataFim() == null) {
+        if (contrato.getDataInicio() == null) {
             return List.of();
         }
         YearMonth primeira = YearMonth.from(contrato.getDataInicio());
-        YearMonth ultima = YearMonth.from(contrato.getDataFim());
+        YearMonth ultima = competenciaFinal(contrato);
         if (ultima.isBefore(primeira)) {
             return List.of();
         }
@@ -91,14 +93,24 @@ public class PagamentoAluguelService {
      * </ul>
      */
     public void reconciliarParaContrato(ContratoEntity contrato) {
-        if (contrato.getDataInicio() == null || contrato.getDataFim() == null) {
+        if (contrato.getDataInicio() == null) {
             return;
         }
         gerarParaContrato(contrato);
         pagamentoAluguelRepository.deleteByContratoIdAndCompetenciaBefore(
                 contrato.getId(), YearMonth.from(contrato.getDataInicio()).atDay(1));
         pagamentoAluguelRepository.deleteByContratoIdAndCompetenciaAfter(
-                contrato.getId(), YearMonth.from(contrato.getDataFim()).atDay(1));
+                contrato.getId(), competenciaFinal(contrato).atDay(1));
+    }
+
+    /**
+     * Ultima competencia do contrato: a data de fim, quando informada, ou o
+     * 12o mes a partir do inicio, para contratos por prazo indeterminado.
+     */
+    private YearMonth competenciaFinal(ContratoEntity contrato) {
+        return contrato.getDataFim() != null
+                ? YearMonth.from(contrato.getDataFim())
+                : YearMonth.from(contrato.getDataInicio()).plusMonths(11);
     }
 
     public PagamentoAluguel criar(PagamentoAluguelRequest request) {

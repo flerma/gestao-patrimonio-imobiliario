@@ -33,6 +33,10 @@ public class InquilinoService {
 
     public Inquilino criar(InquilinoRequest request) {
         UsuarioEntity usuarioEntity = buscarUsuarioEntity(AutenticacaoAtual.usuarioId());
+        if (inquilinoRepository.existsByUsuarioIdAndDocumento(usuarioEntity.getId(), request.getDocumento())) {
+            throw new DocumentoJaCadastradoException(
+                    "Já existe um inquilino cadastrado com este CPF/CNPJ");
+        }
         LocalDateTime agora = LocalDateTime.now();
         InquilinoEntity entity = InquilinoEntity.builder()
                 .id(UUID.randomUUID())
@@ -66,6 +70,11 @@ public class InquilinoService {
 
     public Inquilino atualizar(UUID id, InquilinoRequest request) {
         InquilinoEntity existente = buscarInquilinoEntity(id);
+        if (inquilinoRepository.existsByUsuarioIdAndDocumentoAndIdNot(
+                existente.getUsuario().getId(), request.getDocumento(), id)) {
+            throw new DocumentoJaCadastradoException(
+                    "Já existe um inquilino cadastrado com este CPF/CNPJ");
+        }
         existente.setTipoPessoa(request.getTipoPessoa());
         existente.setNome(request.getNome());
         existente.setDocumento(request.getDocumento());

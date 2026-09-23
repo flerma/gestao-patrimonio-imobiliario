@@ -11,4 +11,8 @@ public interface InquilinoRepository extends JpaRepository<InquilinoEntity, UUID
     List<InquilinoEntity> findAllByUsuarioId(UUID usuarioId);
 
     Optional<InquilinoEntity> findByIdAndUsuarioId(UUID id, UUID usuarioId);
+
+    boolean existsByUsuarioIdAndDocumento(UUID usuarioId, String documento);
+
+    boolean existsByUsuarioIdAndDocumentoAndIdNot(UUID usuarioId, String documento, UUID id);
 }
