@@ -126,17 +126,32 @@ public class PagamentoAluguelService {
 
     /**
      * Primeira competencia efetiva do contrato: o mes de inicio, a menos que
-     * o vencimento desse mes (dia configurado, clampado ao tamanho do mes)
-     * caia antes da propria data de inicio - nesse caso comeca no mes
-     * seguinte. Ex.: contrato com inicio dia 15 e vencimento todo dia 10: o
-     * vencimento do mes de inicio seria dia 10, antes do inquilino sequer
-     * ter comecado o contrato, entao a primeira parcela e a do mes seguinte.
+     * uma das situacoes abaixo empurre para o mes seguinte:
+     * <ul>
+     *   <li>o vencimento desse mes (dia configurado, clampado ao tamanho do
+     *       mes) cai antes da propria data de inicio - ex.: contrato com
+     *       inicio dia 15 e vencimento todo dia 10: o vencimento do mes de
+     *       inicio seria dia 10, antes do inquilino sequer ter comecado o
+     *       contrato;</li>
+     *   <li>a data de inicio esta no mes corrente (o mes de "hoje") mas
+     *       ainda nao chegou - ex.: hoje e dia 5 e o contrato comeca dia 10
+     *       deste mesmo mes: como a vigencia ainda nao comecou de fato, a
+     *       primeira parcela so nasce no mes seguinte, independente do dia
+     *       de vencimento configurado.</li>
+     * </ul>
      */
     private YearMonth competenciaInicial(ContratoEntity contrato) {
-        YearMonth mesInicio = YearMonth.from(contrato.getDataInicio());
+        LocalDate dataInicio = contrato.getDataInicio();
+        YearMonth mesInicio = YearMonth.from(dataInicio);
         int dia = Math.min(contrato.getDiaVencimento(), mesInicio.lengthOfMonth());
         LocalDate vencimentoMesInicio = mesInicio.atDay(dia);
-        return vencimentoMesInicio.isBefore(contrato.getDataInicio())
+        LocalDate hoje = LocalDate.now();
+
+        boolean vencimentoAntesDoInicio = vencimentoMesInicio.isBefore(dataInicio);
+        boolean inicioFuturoNoMesCorrente =
+                mesInicio.equals(YearMonth.from(hoje)) && dataInicio.isAfter(hoje);
+
+        return (vencimentoAntesDoInicio || inicioFuturoNoMesCorrente)
                 ? mesInicio.plusMonths(1)
                 : mesInicio;
     }
