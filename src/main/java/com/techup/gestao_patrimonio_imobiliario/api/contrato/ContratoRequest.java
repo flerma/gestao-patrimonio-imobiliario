@@ -68,4 +68,12 @@ public class ContratoRequest {
      * cada uma) em vez de pendentes/em atraso. Nulo equivale a false.
      */
     Boolean marcarParcelasAnterioresComoPagas;
+
+    /**
+     * Em uma atualizacao de contrato existente, quando o dia de vencimento
+     * muda, define se as parcelas ja existentes com competencia posterior ao
+     * mes atual devem ter sua dataVencimento ajustada para o novo dia. Nulo
+     * equivale a false (mantem as datas de vencimento originais).
+     */
+    Boolean atualizarVencimentoParcelasFuturas;
 }

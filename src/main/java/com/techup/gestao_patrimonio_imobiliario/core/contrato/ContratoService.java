@@ -117,6 +117,9 @@ public class ContratoService {
         }
         pagamentoAluguelService.reconciliarParaContrato(
                 salvo, Boolean.TRUE.equals(request.getMarcarParcelasAnterioresComoPagas()));
+        if (Boolean.TRUE.equals(request.getAtualizarVencimentoParcelasFuturas())) {
+            pagamentoAluguelService.atualizarVencimentoParcelasFuturas(salvo);
+        }
         return ContratoMapper.toDomain(salvo);
     }
 

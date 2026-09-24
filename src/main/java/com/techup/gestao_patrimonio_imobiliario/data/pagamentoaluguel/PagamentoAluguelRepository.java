@@ -22,4 +22,7 @@ public interface PagamentoAluguelRepository extends JpaRepository<PagamentoAlugu
 
     /** Remove cobrancas de competencia posterior ao mes informado (novo fim de vigencia). */
     void deleteByContratoIdAndCompetenciaAfter(UUID contratoId, java.time.LocalDate competencia);
+
+    /** Cobrancas de competencia posterior ao mes informado (para reajustar o vencimento). */
+    List<PagamentoAluguelEntity> findByContratoIdAndCompetenciaAfter(UUID contratoId, java.time.LocalDate competencia);
 }

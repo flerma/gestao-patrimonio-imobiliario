@@ -101,6 +101,30 @@ public class PagamentoAluguelService {
     }
 
     /**
+     * Ajusta a dataVencimento das parcelas com competencia posterior ao mes
+     * atual para o dia de vencimento atual do contrato - usado quando o
+     * usuario altera o dia de vencimento de um contrato existente e confirma
+     * que quer propagar a mudanca para as parcelas futuras (as do mes atual
+     * e anteriores nunca sao tocadas).
+     */
+    public void atualizarVencimentoParcelasFuturas(ContratoEntity contrato) {
+        YearMonth mesAtual = YearMonth.now();
+        List<PagamentoAluguelEntity> futuras = pagamentoAluguelRepository
+                .findByContratoIdAndCompetenciaAfter(contrato.getId(), mesAtual.atDay(1));
+        if (futuras.isEmpty()) {
+            return;
+        }
+        LocalDateTime agora = LocalDateTime.now();
+        for (PagamentoAluguelEntity pagamento : futuras) {
+            YearMonth competencia = YearMonth.from(pagamento.getCompetencia());
+            int dia = Math.min(contrato.getDiaVencimento(), competencia.lengthOfMonth());
+            pagamento.setDataVencimento(competencia.atDay(dia));
+            pagamento.setDataAtualizacao(agora);
+        }
+        pagamentoAluguelRepository.saveAll(futuras);
+    }
+
+    /**
      * Reconcilia a serie de cobrancas apos uma alteracao na vigencia do
      * contrato (dataInicio/dataFim):
      * <ul>
