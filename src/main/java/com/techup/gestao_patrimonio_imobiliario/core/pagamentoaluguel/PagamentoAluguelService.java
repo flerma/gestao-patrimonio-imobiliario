@@ -3,6 +3,7 @@ package com.techup.gestao_patrimonio_imobiliario.core.pagamentoaluguel;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -15,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.techup.gestao_patrimonio_imobiliario.api.pagamentoaluguel.PagamentoAluguelRequest;
 import com.techup.gestao_patrimonio_imobiliario.api.pagamentoaluguel.RegistrarPagamentoRequest;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.AutenticacaoAtual;
+import com.techup.gestao_patrimonio_imobiliario.core.contrato.PrimeiraParcelaCalculator;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.FormaPagamento;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusPagamentoAluguel;
 import com.techup.gestao_patrimonio_imobiliario.data.contrato.ContratoEntity;
@@ -38,11 +40,11 @@ public class PagamentoAluguelService {
 
     /**
      * Gera automaticamente a serie de alugueis do contrato: uma cobranca por mes,
-     * do mes de inicio ao mes de fim do contrato, com vencimento no dia configurado
-     * em {@code diaVencimento} (ajustado para o ultimo dia quando o mes for mais curto).
-     * Idempotente: competencias ja existentes para o contrato sao ignoradas.
-     * Contrato sem data de fim (vigencia por prazo indeterminado) gera 12
-     * competencias a partir do mes de inicio.
+     * da primeira a ultima competencia do contrato, com vencimento no dia
+     * configurado em {@code diaVencimento} (ajustado para o ultimo dia quando o
+     * mes for mais curto). Idempotente: competencias ja existentes para o
+     * contrato sao ignoradas. Contrato sem data de fim (vigencia por prazo
+     * indeterminado) gera 12 parcelas a partir da primeira.
      *
      * <p>Competencias anteriores ao mes atual nascem, por padrao, PENDENTE
      * (e portanto em atraso, ja que o vencimento ja passou). Quando
@@ -51,36 +53,37 @@ public class PagamentoAluguelService {
      * a propria dataVencimento da parcela, formaPagamento = PIX. So afeta
      * competencias sendo criadas agora - nao altera parcelas ja existentes.
      *
-     * <p>Se o vencimento do mes de inicio (dia configurado) cair antes da
-     * propria data de inicio - ex.: contrato comecando dia 15 com
-     * vencimento todo dia 10 - a primeira parcela nao pode ser esse mes (o
-     * vencimento seria anterior ao inicio da vigencia); a serie comeca no
-     * mes seguinte. Ver {@link #competenciaInicial}.
+     * <p>A data de vencimento da primeira parcela e {@code dataPrimeiraParcela}
+     * do contrato (calculada a partir de dataInicio + diaVencimento quando o
+     * contrato nao a informa explicitamente - ver {@link PrimeiraParcelaCalculator});
+     * as parcelas seguintes vencem no mesmo dia dos meses seguintes. Ver
+     * {@link #vencimentoInicial} e {@link #competenciaInicialEfetiva}.
      */
     public List<PagamentoAluguel> gerarParaContrato(ContratoEntity contrato, boolean marcarAnterioresPagas) {
         if (contrato.getDataInicio() == null) {
             return List.of();
         }
-        YearMonth primeira = competenciaInicial(contrato);
-        YearMonth ultima = competenciaFinal(contrato);
-        if (ultima.isBefore(primeira)) {
+        YearMonth vencMes = vencimentoInicial(contrato);
+        YearMonth compMes = competenciaInicialEfetiva(contrato);
+        YearMonth ultimaVencMes = vencimentoFinal(contrato);
+        if (ultimaVencMes.isBefore(vencMes)) {
             return List.of();
         }
 
         LocalDateTime agora = LocalDateTime.now();
         YearMonth mesAtual = YearMonth.now();
         List<PagamentoAluguelEntity> novos = new ArrayList<>();
-        for (YearMonth competencia = primeira; !competencia.isAfter(ultima); competencia = competencia.plusMonths(1)) {
-            if (pagamentoAluguelRepository.existsByContratoIdAndCompetencia(contrato.getId(), competencia.atDay(1))) {
+        for (; !vencMes.isAfter(ultimaVencMes); vencMes = vencMes.plusMonths(1), compMes = compMes.plusMonths(1)) {
+            if (pagamentoAluguelRepository.existsByContratoIdAndCompetencia(contrato.getId(), compMes.atDay(1))) {
                 continue;
             }
-            int dia = Math.min(contrato.getDiaVencimento(), competencia.lengthOfMonth());
-            LocalDate dataVencimento = competencia.atDay(dia);
-            boolean quitarComoPaga = marcarAnterioresPagas && competencia.isBefore(mesAtual);
+            int dia = Math.min(contrato.getDiaVencimento(), vencMes.lengthOfMonth());
+            LocalDate dataVencimento = vencMes.atDay(dia);
+            boolean quitarComoPaga = marcarAnterioresPagas && compMes.isBefore(mesAtual);
             novos.add(PagamentoAluguelEntity.builder()
                     .id(UUID.randomUUID())
                     .contrato(contrato)
-                    .competencia(competencia.atDay(1))
+                    .competencia(compMes.atDay(1))
                     .dataVencimento(dataVencimento)
                     .valorPrevisto(contrato.getValorAluguel())
                     .valorPago(quitarComoPaga ? contrato.getValorAluguel() : null)
@@ -114,11 +117,14 @@ public class PagamentoAluguelService {
         if (futuras.isEmpty()) {
             return;
         }
+        long deslocamento = ChronoUnit.MONTHS.between(
+                competenciaInicialEfetiva(contrato).atDay(1), vencimentoInicial(contrato).atDay(1));
         LocalDateTime agora = LocalDateTime.now();
         for (PagamentoAluguelEntity pagamento : futuras) {
             YearMonth competencia = YearMonth.from(pagamento.getCompetencia());
-            int dia = Math.min(contrato.getDiaVencimento(), competencia.lengthOfMonth());
-            pagamento.setDataVencimento(competencia.atDay(dia));
+            YearMonth vencMes = competencia.plusMonths(deslocamento);
+            int dia = Math.min(contrato.getDiaVencimento(), vencMes.lengthOfMonth());
+            pagamento.setDataVencimento(vencMes.atDay(dia));
             pagamento.setDataAtualizacao(agora);
         }
         pagamentoAluguelRepository.saveAll(futuras);
@@ -143,14 +149,39 @@ public class PagamentoAluguelService {
         }
         gerarParaContrato(contrato, marcarAnterioresPagas);
         pagamentoAluguelRepository.deleteByContratoIdAndCompetenciaBefore(
-                contrato.getId(), competenciaInicial(contrato).atDay(1));
+                contrato.getId(), competenciaInicialEfetiva(contrato).atDay(1));
         pagamentoAluguelRepository.deleteByContratoIdAndCompetenciaAfter(
                 contrato.getId(), competenciaFinal(contrato).atDay(1));
     }
 
     /**
-     * Primeira competencia efetiva do contrato: o mes de inicio, a menos que
-     * uma das situacoes abaixo empurre para o mes seguinte:
+     * Mes de vencimento da primeira parcela: o de {@code dataPrimeiraParcela},
+     * quando o contrato a informa. Contratos criados antes da introducao
+     * desse campo (legado, {@code dataPrimeiraParcela == null}) caem no
+     * comportamento anterior, calculado apenas a partir de
+     * dataInicio/diaVencimento - ver {@link #competenciaInicialLegado}.
+     */
+    private YearMonth vencimentoInicial(ContratoEntity contrato) {
+        return contrato.getDataPrimeiraParcela() != null
+                ? YearMonth.from(contrato.getDataPrimeiraParcela())
+                : competenciaInicialLegado(contrato);
+    }
+
+    /**
+     * Competencia (mes de referencia) da primeira parcela - ver
+     * {@link PrimeiraParcelaCalculator#competencia}. Para contratos legados
+     * sem dataPrimeiraParcela, competencia e vencimento coincidem, exatamente
+     * como no comportamento anterior a esse campo.
+     */
+    private YearMonth competenciaInicialEfetiva(ContratoEntity contrato) {
+        return contrato.getDataPrimeiraParcela() != null
+                ? PrimeiraParcelaCalculator.competencia(contrato.getDataInicio(), contrato.getDataPrimeiraParcela())
+                : competenciaInicialLegado(contrato);
+    }
+
+    /**
+     * Comportamento legado (pre dataPrimeiraParcela): o mes de inicio, a
+     * menos que uma das situacoes abaixo empurre para o mes seguinte:
      * <ul>
      *   <li>o vencimento desse mes (dia configurado, clampado ao tamanho do
      *       mes) cai antes da propria data de inicio - ex.: contrato com
@@ -164,7 +195,7 @@ public class PagamentoAluguelService {
      *       de vencimento configurado.</li>
      * </ul>
      */
-    private YearMonth competenciaInicial(ContratoEntity contrato) {
+    private YearMonth competenciaInicialLegado(ContratoEntity contrato) {
         LocalDate dataInicio = contrato.getDataInicio();
         YearMonth mesInicio = YearMonth.from(dataInicio);
         int dia = Math.min(contrato.getDiaVencimento(), mesInicio.lengthOfMonth());
@@ -181,13 +212,25 @@ public class PagamentoAluguelService {
     }
 
     /**
-     * Ultima competencia do contrato: a data de fim, quando informada, ou o
-     * 12o mes a partir do inicio, para contratos por prazo indeterminado.
+     * Ultimo mes de vencimento do contrato: o de dataFim, quando informada,
+     * ou o 12o mes a partir da primeira parcela, para contratos por prazo
+     * indeterminado.
      */
-    private YearMonth competenciaFinal(ContratoEntity contrato) {
+    private YearMonth vencimentoFinal(ContratoEntity contrato) {
         return contrato.getDataFim() != null
                 ? YearMonth.from(contrato.getDataFim())
-                : competenciaInicial(contrato).plusMonths(11);
+                : vencimentoInicial(contrato).plusMonths(11);
+    }
+
+    /**
+     * Ultima competencia do contrato, na mesma escala de {@link #vencimentoFinal}
+     * mas expressa em competencia (pode diferir em ate um mes do vencimento
+     * - ver {@link #competenciaInicialEfetiva}).
+     */
+    private YearMonth competenciaFinal(ContratoEntity contrato) {
+        long deslocamento = ChronoUnit.MONTHS.between(
+                vencimentoInicial(contrato).atDay(1), vencimentoFinal(contrato).atDay(1));
+        return competenciaInicialEfetiva(contrato).plusMonths(deslocamento);
     }
 
     public PagamentoAluguel criar(PagamentoAluguelRequest request) {

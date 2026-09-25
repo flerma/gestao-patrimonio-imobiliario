@@ -16,5 +16,6 @@
     <include file="db/changelog/010-add-usuario-to-inquilinos.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/011-add-role-to-usuarios.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/012-seed-usuario-admin.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/013-add-data-primeira-parcela-to-contratos.sql" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

@@ -32,6 +32,7 @@ public class Contrato {
     LocalDate dataFim;
     BigDecimal valorAluguel;
     Integer diaVencimento;
+    LocalDate dataPrimeiraParcela;
     IndiceReajuste indiceReajuste;
     BigDecimal percentualReajuste;
     Integer periodoReajuste;

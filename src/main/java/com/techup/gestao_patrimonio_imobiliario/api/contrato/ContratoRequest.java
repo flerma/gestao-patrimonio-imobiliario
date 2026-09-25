@@ -46,6 +46,13 @@ public class ContratoRequest {
     @Max(31)
     Integer diaVencimento;
 
+    /**
+     * Data de vencimento da primeira parcela de aluguel. Quando nao
+     * informada, e calculada automaticamente a partir de dataInicio e
+     * diaVencimento (ver {@link com.techup.gestao_patrimonio_imobiliario.core.contrato.PrimeiraParcelaCalculator}).
+     */
+    LocalDate dataPrimeiraParcela;
+
     IndiceReajuste indiceReajuste;
 
     @PositiveOrZero

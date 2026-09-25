@@ -67,6 +67,15 @@ public class ContratoEntity {
     @Column(name = "dia_vencimento", nullable = false)
     private Integer diaVencimento;
 
+    /**
+     * Data de vencimento da primeira parcela de aluguel do contrato. Nula em
+     * contratos criados antes da introducao deste campo - nesse caso a
+     * geracao de parcelas usa o comportamento legado baseado somente em
+     * dataInicio/diaVencimento (ver PagamentoAluguelService).
+     */
+    @Column(name = "data_primeira_parcela")
+    private LocalDate dataPrimeiraParcela;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "indice_reajuste")
     private IndiceReajuste indiceReajuste;

@@ -1,5 +1,6 @@
 package com.techup.gestao_patrimonio_imobiliario.core.contrato;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -57,6 +58,7 @@ public class ContratoService {
                 .dataFim(request.getDataFim())
                 .valorAluguel(request.getValorAluguel())
                 .diaVencimento(request.getDiaVencimento())
+                .dataPrimeiraParcela(resolverDataPrimeiraParcela(request))
                 .indiceReajuste(request.getIndiceReajuste())
                 .percentualReajuste(request.getPercentualReajuste())
                 .periodoReajuste(request.getPeriodoReajuste())
@@ -99,6 +101,7 @@ public class ContratoService {
         existente.setDataFim(request.getDataFim());
         existente.setValorAluguel(request.getValorAluguel());
         existente.setDiaVencimento(request.getDiaVencimento());
+        existente.setDataPrimeiraParcela(resolverDataPrimeiraParcela(request));
         existente.setIndiceReajuste(request.getIndiceReajuste());
         existente.setPercentualReajuste(request.getPercentualReajuste());
         existente.setPeriodoReajuste(request.getPeriodoReajuste());
@@ -131,6 +134,22 @@ public class ContratoService {
         if (imovel != null) {
             liberarImovelSeSemContratoAtivo(imovel, id);
         }
+    }
+
+    /**
+     * Usa a data da primeira parcela informada no request, validando que nao
+     * e anterior ao inicio da vigencia; quando nao informada, calcula a
+     * sugestao padrao a partir de dataInicio e diaVencimento.
+     */
+    private LocalDate resolverDataPrimeiraParcela(ContratoRequest request) {
+        if (request.getDataPrimeiraParcela() == null) {
+            return PrimeiraParcelaCalculator.sugerir(request.getDataInicio(), request.getDiaVencimento());
+        }
+        if (request.getDataPrimeiraParcela().isBefore(request.getDataInicio())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "A data da primeira parcela nao pode ser anterior ao inicio da vigencia.");
+        }
+        return request.getDataPrimeiraParcela();
     }
 
     private boolean pertenceAoUsuarioAtual(UUID donoId) {
