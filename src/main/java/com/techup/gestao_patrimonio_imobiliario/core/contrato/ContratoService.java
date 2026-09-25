@@ -1,5 +1,6 @@
 package com.techup.gestao_patrimonio_imobiliario.core.contrato;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.techup.gestao_patrimonio_imobiliario.api.contrato.ContratoRequest;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.AutenticacaoAtual;
+import com.techup.gestao_patrimonio_imobiliario.core.enums.IndiceReajuste;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusContrato;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusImovel;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.TipoGarantia;
@@ -44,6 +46,7 @@ public class ContratoService {
     }
 
     public Contrato criar(ContratoRequest request) {
+        validarPercentualReajuste(request);
         ImovelEntity imovelEntity = buscarImovelEntity(request.getImovelId());
         InquilinoEntity inquilinoEntity = buscarInquilinoEntity(request.getInquilinoId());
         LocalDateTime agora = LocalDateTime.now();
@@ -89,6 +92,7 @@ public class ContratoService {
     }
 
     public Contrato atualizar(UUID id, ContratoRequest request) {
+        validarPercentualReajuste(request);
         ContratoEntity existente = buscarContratoEntity(id);
         ImovelEntity imovelAnterior = existente.getImovel();
         ImovelEntity imovelEntity = buscarImovelEntity(request.getImovelId());
@@ -152,6 +156,19 @@ public class ContratoService {
                     "A data da primeira parcela nao pode ser anterior ao inicio da vigencia.");
         }
         return request.getDataPrimeiraParcela();
+    }
+
+    /**
+     * Quando o indice de reajuste e "Percentual fixo", o percentual de
+     * reajuste e obrigatorio e deve ser maior que zero.
+     */
+    private void validarPercentualReajuste(ContratoRequest request) {
+        if (request.getIndiceReajuste() == IndiceReajuste.FIXO
+                && (request.getPercentualReajuste() == null
+                        || request.getPercentualReajuste().compareTo(BigDecimal.ZERO) <= 0)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Informe o percentual de reajuste quando o indice de reajuste for \"Percentual fixo\".");
+        }
     }
 
     private boolean pertenceAoUsuarioAtual(UUID donoId) {
