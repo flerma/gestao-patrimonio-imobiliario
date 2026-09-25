@@ -59,6 +59,7 @@ public class ContratoService {
                 .valorAluguel(request.getValorAluguel())
                 .diaVencimento(request.getDiaVencimento())
                 .dataPrimeiraParcela(resolverDataPrimeiraParcela(request))
+                .valorPrimeiraParcela(request.getValorPrimeiraParcela())
                 .indiceReajuste(request.getIndiceReajuste())
                 .percentualReajuste(request.getPercentualReajuste())
                 .periodoReajuste(request.getPeriodoReajuste())
@@ -102,6 +103,7 @@ public class ContratoService {
         existente.setValorAluguel(request.getValorAluguel());
         existente.setDiaVencimento(request.getDiaVencimento());
         existente.setDataPrimeiraParcela(resolverDataPrimeiraParcela(request));
+        existente.setValorPrimeiraParcela(request.getValorPrimeiraParcela());
         existente.setIndiceReajuste(request.getIndiceReajuste());
         existente.setPercentualReajuste(request.getPercentualReajuste());
         existente.setPeriodoReajuste(request.getPeriodoReajuste());

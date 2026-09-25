@@ -1,5 +1,6 @@
 package com.techup.gestao_patrimonio_imobiliario.core.pagamentoaluguel;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -80,8 +81,9 @@ public class PagamentoAluguelService {
             if (pagamentoAluguelRepository.existsByContratoIdAndCompetencia(contrato.getId(), compMes.atDay(1))) {
                 continue;
             }
+            boolean ehPrimeiraParcela = vencMes.equals(primeiraVencMes);
             LocalDate dataVencimento;
-            if (vencMes.equals(primeiraVencMes) && contrato.getDataPrimeiraParcela() != null) {
+            if (ehPrimeiraParcela && contrato.getDataPrimeiraParcela() != null) {
                 // A primeira parcela respeita exatamente a data informada/confirmada
                 // pelo usuario, mesmo que o dia dela nao coincida com diaVencimento.
                 dataVencimento = contrato.getDataPrimeiraParcela();
@@ -89,14 +91,17 @@ public class PagamentoAluguelService {
                 int dia = Math.min(contrato.getDiaVencimento(), vencMes.lengthOfMonth());
                 dataVencimento = vencMes.atDay(dia);
             }
+            BigDecimal valorPrevisto = (ehPrimeiraParcela && contrato.getValorPrimeiraParcela() != null)
+                    ? contrato.getValorPrimeiraParcela()
+                    : contrato.getValorAluguel();
             boolean quitarComoPaga = marcarAnterioresPagas && compMes.isBefore(mesAtual);
             novos.add(PagamentoAluguelEntity.builder()
                     .id(UUID.randomUUID())
                     .contrato(contrato)
                     .competencia(compMes.atDay(1))
                     .dataVencimento(dataVencimento)
-                    .valorPrevisto(contrato.getValorAluguel())
-                    .valorPago(quitarComoPaga ? contrato.getValorAluguel() : null)
+                    .valorPrevisto(valorPrevisto)
+                    .valorPago(quitarComoPaga ? valorPrevisto : null)
                     .dataPagamento(quitarComoPaga ? dataVencimento : null)
                     .formaPagamento(quitarComoPaga ? FormaPagamento.PIX : null)
                     .status(quitarComoPaga ? StatusPagamentoAluguel.PAGO : StatusPagamentoAluguel.PENDENTE)

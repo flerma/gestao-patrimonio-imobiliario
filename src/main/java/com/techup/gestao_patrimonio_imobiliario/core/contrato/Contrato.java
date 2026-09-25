@@ -33,6 +33,7 @@ public class Contrato {
     BigDecimal valorAluguel;
     Integer diaVencimento;
     LocalDate dataPrimeiraParcela;
+    BigDecimal valorPrimeiraParcela;
     IndiceReajuste indiceReajuste;
     BigDecimal percentualReajuste;
     Integer periodoReajuste;

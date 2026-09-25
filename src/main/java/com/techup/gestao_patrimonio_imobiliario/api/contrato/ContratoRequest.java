@@ -53,6 +53,14 @@ public class ContratoRequest {
      */
     LocalDate dataPrimeiraParcela;
 
+    /**
+     * Valor previsto da primeira parcela de aluguel, quando diferente de
+     * valorAluguel. Opcional; quando nao informado, a primeira parcela usa
+     * o mesmo valor das demais (valorAluguel).
+     */
+    @Positive
+    BigDecimal valorPrimeiraParcela;
+
     IndiceReajuste indiceReajuste;
 
     @PositiveOrZero

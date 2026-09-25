@@ -76,6 +76,14 @@ public class ContratoEntity {
     @Column(name = "data_primeira_parcela")
     private LocalDate dataPrimeiraParcela;
 
+    /**
+     * Valor previsto da primeira parcela de aluguel, quando diferente de
+     * valorAluguel. Nula quando a primeira parcela deve usar o mesmo valor
+     * das demais (valorAluguel) - ver PagamentoAluguelService.
+     */
+    @Column(name = "valor_primeira_parcela", precision = 15, scale = 2)
+    private BigDecimal valorPrimeiraParcela;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "indice_reajuste")
     private IndiceReajuste indiceReajuste;

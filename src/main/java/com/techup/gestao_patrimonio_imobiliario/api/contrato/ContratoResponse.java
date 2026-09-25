@@ -32,6 +32,7 @@ public class ContratoResponse {
     BigDecimal valorAluguel;
     Integer diaVencimento;
     LocalDate dataPrimeiraParcela;
+    BigDecimal valorPrimeiraParcela;
     IndiceReajuste indiceReajuste;
     BigDecimal percentualReajuste;
     Integer periodoReajuste;
@@ -56,6 +57,7 @@ public class ContratoResponse {
                 .valorAluguel(contrato.getValorAluguel())
                 .diaVencimento(contrato.getDiaVencimento())
                 .dataPrimeiraParcela(contrato.getDataPrimeiraParcela())
+                .valorPrimeiraParcela(contrato.getValorPrimeiraParcela())
                 .indiceReajuste(contrato.getIndiceReajuste())
                 .percentualReajuste(contrato.getPercentualReajuste())
                 .periodoReajuste(contrato.getPeriodoReajuste())
