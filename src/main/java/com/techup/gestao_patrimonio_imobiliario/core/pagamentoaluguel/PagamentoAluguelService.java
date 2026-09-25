@@ -53,11 +53,13 @@ public class PagamentoAluguelService {
      * a propria dataVencimento da parcela, formaPagamento = PIX. So afeta
      * competencias sendo criadas agora - nao altera parcelas ja existentes.
      *
-     * <p>A data de vencimento da primeira parcela e {@code dataPrimeiraParcela}
-     * do contrato (calculada a partir de dataInicio + diaVencimento quando o
-     * contrato nao a informa explicitamente - ver {@link PrimeiraParcelaCalculator});
-     * as parcelas seguintes vencem no mesmo dia dos meses seguintes. Ver
-     * {@link #vencimentoInicial} e {@link #competenciaInicialEfetiva}.
+     * <p>A data de vencimento da primeira parcela e exatamente
+     * {@code contrato.getDataPrimeiraParcela()} (calculada a partir de
+     * dataInicio + diaVencimento quando o contrato nao a informa
+     * explicitamente - ver {@link PrimeiraParcelaCalculator}), mesmo que o
+     * dia dela nao coincida com {@code diaVencimento}; as parcelas seguintes
+     * vencem no dia configurado em {@code diaVencimento} dos meses
+     * seguintes. Ver {@link #vencimentoInicial} e {@link #competenciaInicialEfetiva}.
      */
     public List<PagamentoAluguel> gerarParaContrato(ContratoEntity contrato, boolean marcarAnterioresPagas) {
         if (contrato.getDataInicio() == null) {
@@ -69,6 +71,7 @@ public class PagamentoAluguelService {
         if (ultimaVencMes.isBefore(vencMes)) {
             return List.of();
         }
+        YearMonth primeiraVencMes = vencMes;
 
         LocalDateTime agora = LocalDateTime.now();
         YearMonth mesAtual = YearMonth.now();
@@ -77,8 +80,15 @@ public class PagamentoAluguelService {
             if (pagamentoAluguelRepository.existsByContratoIdAndCompetencia(contrato.getId(), compMes.atDay(1))) {
                 continue;
             }
-            int dia = Math.min(contrato.getDiaVencimento(), vencMes.lengthOfMonth());
-            LocalDate dataVencimento = vencMes.atDay(dia);
+            LocalDate dataVencimento;
+            if (vencMes.equals(primeiraVencMes) && contrato.getDataPrimeiraParcela() != null) {
+                // A primeira parcela respeita exatamente a data informada/confirmada
+                // pelo usuario, mesmo que o dia dela nao coincida com diaVencimento.
+                dataVencimento = contrato.getDataPrimeiraParcela();
+            } else {
+                int dia = Math.min(contrato.getDiaVencimento(), vencMes.lengthOfMonth());
+                dataVencimento = vencMes.atDay(dia);
+            }
             boolean quitarComoPaga = marcarAnterioresPagas && compMes.isBefore(mesAtual);
             novos.add(PagamentoAluguelEntity.builder()
                     .id(UUID.randomUUID())
