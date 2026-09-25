@@ -1,6 +1,7 @@
 package com.techup.gestao_patrimonio_imobiliario.data.imovel;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -54,6 +55,10 @@ public class ImovelEntity {
 
     @Column(name = "valor_aquisicao", nullable = false, precision = 15, scale = 2)
     private BigDecimal valorAquisicao;
+
+    /** Nula em imoveis cadastrados antes da introducao deste campo. */
+    @Column(name = "data_aquisicao")
+    private LocalDate dataAquisicao;
 
     @Column(name = "valor_atual", nullable = false, precision = 15, scale = 2)
     private BigDecimal valorAtual;

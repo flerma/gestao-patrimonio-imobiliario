@@ -40,6 +40,7 @@ public class ImovelService {
                 .tipo(request.getTipo())
                 .status(request.getStatus())
                 .valorAquisicao(request.getValorAquisicao())
+                .dataAquisicao(request.getDataAquisicao())
                 .valorAtual(request.getValorAtual())
                 .endereco(EnderecoMapper.toEmbeddable(request.getEndereco()))
                 .dataCriacao(agora)
@@ -66,6 +67,7 @@ public class ImovelService {
         existente.setTipo(request.getTipo());
         existente.setStatus(request.getStatus());
         existente.setValorAquisicao(request.getValorAquisicao());
+        existente.setDataAquisicao(request.getDataAquisicao());
         existente.setValorAtual(request.getValorAtual());
         existente.setEndereco(EnderecoMapper.toEmbeddable(request.getEndereco()));
         existente.setDataAtualizacao(LocalDateTime.now());

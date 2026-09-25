@@ -1,6 +1,7 @@
 package com.techup.gestao_patrimonio_imobiliario.core.imovel;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -26,6 +27,7 @@ public class Imovel {
     TipoImovel tipo;
     StatusImovel status;
     BigDecimal valorAquisicao;
+    LocalDate dataAquisicao;
     BigDecimal valorAtual;
     Endereco endereco;
     LocalDateTime dataCriacao;

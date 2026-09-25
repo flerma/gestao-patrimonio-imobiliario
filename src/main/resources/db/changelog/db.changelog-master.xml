@@ -18,5 +18,6 @@
     <include file="db/changelog/012-seed-usuario-admin.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/013-add-data-primeira-parcela-to-contratos.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/014-add-valor-primeira-parcela-to-contratos.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/015-add-data-aquisicao-to-imoveis.sql" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

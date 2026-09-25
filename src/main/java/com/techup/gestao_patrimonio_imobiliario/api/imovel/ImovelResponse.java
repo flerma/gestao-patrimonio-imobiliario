@@ -1,6 +1,7 @@
 package com.techup.gestao_patrimonio_imobiliario.api.imovel;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -25,6 +26,7 @@ public class ImovelResponse {
     TipoImovel tipo;
     StatusImovel status;
     BigDecimal valorAquisicao;
+    LocalDate dataAquisicao;
     BigDecimal valorAtual;
     Endereco endereco;
     LocalDateTime dataCriacao;
@@ -41,6 +43,7 @@ public class ImovelResponse {
                 .tipo(imovel.getTipo())
                 .status(imovel.getStatus())
                 .valorAquisicao(imovel.getValorAquisicao())
+                .dataAquisicao(imovel.getDataAquisicao())
                 .valorAtual(imovel.getValorAtual())
                 .endereco(imovel.getEndereco())
                 .dataCriacao(imovel.getDataCriacao())
