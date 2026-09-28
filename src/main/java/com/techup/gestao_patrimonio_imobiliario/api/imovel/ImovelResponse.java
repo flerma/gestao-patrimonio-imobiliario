@@ -31,6 +31,8 @@ public class ImovelResponse {
     Endereco endereco;
     LocalDateTime dataCriacao;
     LocalDateTime dataAtualizacao;
+    /** Soma do valor pago em todas as parcelas de aluguel de todos os contratos do imovel. Nula quando nao calculada (ex.: listagem). */
+    BigDecimal totalAlugueisPagos;
 
     public static ImovelResponse from(Imovel imovel) {
         if (imovel == null) {
@@ -48,6 +50,7 @@ public class ImovelResponse {
                 .endereco(imovel.getEndereco())
                 .dataCriacao(imovel.getDataCriacao())
                 .dataAtualizacao(imovel.getDataAtualizacao())
+                .totalAlugueisPagos(imovel.getTotalAlugueisPagos())
                 .build();
     }
 }

@@ -15,6 +15,7 @@ import com.techup.gestao_patrimonio_imobiliario.data.endereco.EnderecoMapper;
 import com.techup.gestao_patrimonio_imobiliario.data.imovel.ImovelEntity;
 import com.techup.gestao_patrimonio_imobiliario.data.imovel.ImovelRepository;
 import com.techup.gestao_patrimonio_imobiliario.data.imovel.ImovelMapper;
+import com.techup.gestao_patrimonio_imobiliario.data.pagamentoaluguel.PagamentoAluguelRepository;
 import com.techup.gestao_patrimonio_imobiliario.data.usuario.UsuarioEntity;
 import com.techup.gestao_patrimonio_imobiliario.data.usuario.UsuarioRepository;
 
@@ -24,10 +25,13 @@ public class ImovelService {
 
     private final ImovelRepository imovelRepository;
     private final UsuarioRepository usuarioRepository;
+    private final PagamentoAluguelRepository pagamentoAluguelRepository;
 
-    public ImovelService(ImovelRepository imovelRepository, UsuarioRepository usuarioRepository) {
+    public ImovelService(ImovelRepository imovelRepository, UsuarioRepository usuarioRepository,
+                         PagamentoAluguelRepository pagamentoAluguelRepository) {
         this.imovelRepository = imovelRepository;
         this.usuarioRepository = usuarioRepository;
+        this.pagamentoAluguelRepository = pagamentoAluguelRepository;
     }
 
     public Imovel criar(ImovelRequest request) {
@@ -58,7 +62,8 @@ public class ImovelService {
 
     @Transactional(readOnly = true)
     public Imovel buscarPorId(UUID id) {
-        return ImovelMapper.toDomain(buscarImovelEntity(id));
+        Imovel imovel = ImovelMapper.toDomain(buscarImovelEntity(id));
+        return imovel.withTotalAlugueisPagos(pagamentoAluguelRepository.sumValorPagoByImovelId(id));
     }
 
     public Imovel atualizar(UUID id, ImovelRequest request) {

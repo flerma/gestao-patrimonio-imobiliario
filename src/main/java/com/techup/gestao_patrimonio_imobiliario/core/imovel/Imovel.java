@@ -32,4 +32,13 @@ public class Imovel {
     Endereco endereco;
     LocalDateTime dataCriacao;
     LocalDateTime dataAtualizacao;
+
+    /**
+     * Soma do valor efetivamente pago em todas as parcelas de aluguel de
+     * todos os contratos do imovel (qualquer status de contrato ou parcela).
+     * Nao vem preenchido em ImovelMapper#toDomain - e calculado e anexado a
+     * parte (ver ImovelService#buscarPorId), pois depende de uma consulta
+     * agregada em pagamentos_aluguel.
+     */
+    BigDecimal totalAlugueisPagos;
 }
