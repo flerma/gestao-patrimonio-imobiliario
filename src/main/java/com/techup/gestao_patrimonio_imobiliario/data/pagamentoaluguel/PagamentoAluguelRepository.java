@@ -32,4 +32,7 @@ public interface PagamentoAluguelRepository extends JpaRepository<PagamentoAlugu
 
     /** Cobrancas de competencia posterior ao mes informado (para reajustar o vencimento). */
     List<PagamentoAluguelEntity> findByContratoIdAndCompetenciaAfter(UUID contratoId, java.time.LocalDate competencia);
+
+    /** Cobrancas de competencia igual ou posterior ao mes informado (para reajustar o valor previsto). */
+    List<PagamentoAluguelEntity> findByContratoIdAndCompetenciaGreaterThanEqual(UUID contratoId, java.time.LocalDate competencia);
 }

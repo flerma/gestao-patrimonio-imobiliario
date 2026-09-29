@@ -146,6 +146,33 @@ public class PagamentoAluguelService {
     }
 
     /**
+     * Atualiza o valorPrevisto das parcelas de aluguel do contrato para o
+     * valorAluguel atual - usado quando o usuario altera o valor do aluguel
+     * de um contrato existente e confirma a propagacao para as parcelas ja
+     * geradas.
+     *
+     * <p>Quando {@code todasParcelas} e true, atualiza TODAS as parcelas do
+     * contrato, inclusive as de competencia anterior ao mes atual (mesmo as
+     * ja pagas). Quando false, atualiza somente as parcelas de competencia
+     * igual ou posterior ao mes atual - as anteriores mantem o valor antigo.
+     */
+    public void atualizarValorParcelas(ContratoEntity contrato, boolean todasParcelas) {
+        List<PagamentoAluguelEntity> parcelas = todasParcelas
+                ? pagamentoAluguelRepository.findByContratoIdOrderByCompetenciaAsc(contrato.getId())
+                : pagamentoAluguelRepository.findByContratoIdAndCompetenciaGreaterThanEqual(
+                        contrato.getId(), YearMonth.now().atDay(1));
+        if (parcelas.isEmpty()) {
+            return;
+        }
+        LocalDateTime agora = LocalDateTime.now();
+        for (PagamentoAluguelEntity parcela : parcelas) {
+            parcela.setValorPrevisto(contrato.getValorAluguel());
+            parcela.setDataAtualizacao(agora);
+        }
+        pagamentoAluguelRepository.saveAll(parcelas);
+    }
+
+    /**
      * Reconcilia a serie de cobrancas apos uma alteracao na vigencia do
      * contrato (dataInicio/dataFim):
      * <ul>

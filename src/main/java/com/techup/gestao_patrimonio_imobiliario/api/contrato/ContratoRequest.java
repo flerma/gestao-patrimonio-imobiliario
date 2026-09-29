@@ -91,4 +91,14 @@ public class ContratoRequest {
      * equivale a false (mantem as datas de vencimento originais).
      */
     Boolean atualizarVencimentoParcelasFuturas;
+
+    /**
+     * Em uma atualizacao de contrato existente, quando o valor do aluguel
+     * muda, define como propagar a mudanca para as parcelas ja geradas:
+     * true atualiza o valorPrevisto de todas as parcelas (inclusive as de
+     * competencia anterior ao mes atual, mesmo ja pagas); false atualiza
+     * somente as parcelas de competencia igual ou posterior ao mes atual.
+     * Nulo (padrao) nao atualiza nenhuma parcela ja existente.
+     */
+    Boolean atualizarValorParcelas;
 }

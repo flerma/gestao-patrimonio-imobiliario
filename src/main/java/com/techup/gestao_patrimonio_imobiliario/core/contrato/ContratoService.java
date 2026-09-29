@@ -129,6 +129,9 @@ public class ContratoService {
         if (Boolean.TRUE.equals(request.getAtualizarVencimentoParcelasFuturas())) {
             pagamentoAluguelService.atualizarVencimentoParcelasFuturas(salvo);
         }
+        if (request.getAtualizarValorParcelas() != null) {
+            pagamentoAluguelService.atualizarValorParcelas(salvo, request.getAtualizarValorParcelas());
+        }
         return ContratoMapper.toDomain(salvo);
     }
 
