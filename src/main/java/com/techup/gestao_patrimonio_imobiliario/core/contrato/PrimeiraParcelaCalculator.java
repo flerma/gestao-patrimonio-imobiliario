@@ -21,11 +21,19 @@ import java.time.YearMonth;
  */
 public final class PrimeiraParcelaCalculator {
 
+    /** A primeira parcela deve vencer, no minimo, esta quantidade de dias apos o inicio da vigencia. */
+    public static final int DIAS_MINIMOS_APOS_INICIO = 30;
+
     private PrimeiraParcelaCalculator() {
     }
 
+    /** Data mais cedo permitida para a primeira parcela. */
+    public static LocalDate dataMinima(LocalDate dataInicio) {
+        return dataInicio.plusDays(DIAS_MINIMOS_APOS_INICIO);
+    }
+
     public static LocalDate sugerir(LocalDate dataInicio, int diaVencimento) {
-        LocalDate base = dataInicio.plusDays(30);
+        LocalDate base = dataMinima(dataInicio);
         YearMonth mesAlvo = base.getDayOfMonth() <= diaVencimento
                 ? YearMonth.from(base)
                 : YearMonth.from(base).plusMonths(1);

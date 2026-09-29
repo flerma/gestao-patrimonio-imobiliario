@@ -146,17 +146,20 @@ public class ContratoService {
     }
 
     /**
-     * Usa a data da primeira parcela informada no request, validando que nao
-     * e anterior ao inicio da vigencia; quando nao informada, calcula a
-     * sugestao padrao a partir de dataInicio e diaVencimento.
+     * Usa a data da primeira parcela informada no request, validando que vence
+     * no minimo {@link PrimeiraParcelaCalculator#DIAS_MINIMOS_APOS_INICIO} dias
+     * apos o inicio da vigencia; quando nao informada, calcula a sugestao
+     * padrao a partir de dataInicio e diaVencimento.
      */
     private LocalDate resolverDataPrimeiraParcela(ContratoRequest request) {
         if (request.getDataPrimeiraParcela() == null) {
             return PrimeiraParcelaCalculator.sugerir(request.getDataInicio(), request.getDiaVencimento());
         }
-        if (request.getDataPrimeiraParcela().isBefore(request.getDataInicio())) {
+        if (request.getDataPrimeiraParcela().isBefore(PrimeiraParcelaCalculator.dataMinima(request.getDataInicio()))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "A data da primeira parcela nao pode ser anterior ao inicio da vigencia.");
+                    "A data da primeira parcela deve ser, no minimo, "
+                            + PrimeiraParcelaCalculator.DIAS_MINIMOS_APOS_INICIO
+                            + " dias apos o inicio da vigencia.");
         }
         return request.getDataPrimeiraParcela();
     }
