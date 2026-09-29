@@ -35,6 +35,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final GoogleIdTokenVerifier googleIdTokenVerifier;
     private final long refreshTokenExpirationMs;
 
     public AuthService(
@@ -42,11 +43,13 @@ public class AuthService {
             RefreshTokenRepository refreshTokenRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
+            GoogleIdTokenVerifier googleIdTokenVerifier,
             @Value("${security.jwt.refresh-token-expiration-ms}") long refreshTokenExpirationMs) {
         this.usuarioRepository = usuarioRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.googleIdTokenVerifier = googleIdTokenVerifier;
         this.refreshTokenExpirationMs = refreshTokenExpirationMs;
     }
 
@@ -58,7 +61,54 @@ public class AuthService {
             throw new CredenciaisInvalidasException("Usuário ou senha inválidos");
         }
 
-        Usuario usuario = UsuarioMapper.toDomain(entity);
+        return emitirTokens(UsuarioMapper.toDomain(entity));
+    }
+
+    /**
+     * Login (e cadastro automatico no primeiro acesso) com uma conta Google.
+     * O ID token e validado pelo {@link GoogleIdTokenVerifier}; o usuario e
+     * localizado pelo id da conta Google ou, na falta dele, pelo e-mail
+     * (verificado pelo Google). Uma conta local ja existente com o mesmo
+     * e-mail e vinculada a conta Google e continua podendo entrar com senha.
+     * Sem conta, cria um usuario GOOGLE (sem senha/telefone), sempre USUARIO.
+     */
+    public TokenPair loginGoogle(String idToken) {
+        GoogleIdentidade google = googleIdTokenVerifier.verificar(idToken);
+        UsuarioEntity entity = usuarioRepository
+                .findByProvedorAutenticacaoAndIdUsuarioProvedor(ProvedorAutenticacao.GOOGLE, google.sub())
+                .or(() -> usuarioRepository.findByEmailIgnoreCase(google.email()))
+                .map(existente -> vincularGoogle(existente, google))
+                .orElseGet(() -> cadastrarViaGoogle(google));
+        return emitirTokens(UsuarioMapper.toDomain(entity));
+    }
+
+    private UsuarioEntity vincularGoogle(UsuarioEntity existente, GoogleIdentidade google) {
+        if (existente.getIdUsuarioProvedor() == null) {
+            existente.setIdUsuarioProvedor(google.sub());
+            existente.setDataAtualizacao(LocalDateTime.now());
+            return usuarioRepository.save(existente);
+        }
+        return existente;
+    }
+
+    private UsuarioEntity cadastrarViaGoogle(GoogleIdentidade google) {
+        LocalDateTime agora = LocalDateTime.now();
+        Usuario usuario = Usuario.builder()
+                .id(UUID.randomUUID())
+                .nome(google.nome())
+                .email(google.email())
+                .provedorAutenticacao(ProvedorAutenticacao.GOOGLE)
+                .idUsuarioProvedor(google.sub())
+                .status(StatusUsuario.ATIVO)
+                // Mesmo criterio do autocadastro: nunca cria ADMIN.
+                .role(RoleUsuario.USUARIO)
+                .dataCriacao(agora)
+                .dataAtualizacao(agora)
+                .build();
+        return usuarioRepository.save(UsuarioMapper.toEntity(usuario));
+    }
+
+    private TokenPair emitirTokens(Usuario usuario) {
         String accessToken = jwtService.gerarAccessToken(usuario);
         String refreshTokenPlaintext = gerarRefreshTokenOpaco();
         persistirRefreshToken(usuario.getId(), refreshTokenPlaintext);

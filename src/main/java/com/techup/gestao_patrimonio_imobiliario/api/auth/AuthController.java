@@ -41,6 +41,17 @@ public class AuthController {
         return ResponseEntity.ok(toTokenResponse(tokenPair));
     }
 
+    @PostMapping("/google")
+    @Operation(summary = "Login com Google", description = "Autentica (e cadastra no primeiro acesso) um usuário a partir do ID token do Google e retorna o par de tokens (access + refresh).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Autenticado com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Token do Google inválido, expirado ou com e-mail não verificado", content = @Content),
+            @ApiResponse(responseCode = "503", description = "Login com Google não configurado no servidor", content = @Content)
+    })
+    public ResponseEntity<TokenResponse> loginGoogle(@Valid @RequestBody GoogleLoginRequest request) {
+        return ResponseEntity.ok(toTokenResponse(authService.loginGoogle(request.getIdToken())));
+    }
+
     @PostMapping("/registrar")
     @Operation(summary = "Registrar", description = "Cria uma nova conta de usuário local (e-mail/senha).")
     @ApiResponses({

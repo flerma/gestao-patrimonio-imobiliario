@@ -49,6 +49,11 @@ security:
     secret: ${JWT_SECRET:troque-este-segredo-em-producao-precisa-ter-pelo-menos-256-bits-de-tamanho}
     access-token-expiration-ms: 3600000
     refresh-token-expiration-ms: 604800000
+  # Login com Google: client IDs OAuth aceitos como audiencia do ID token,
+  # separados por virgula (normalmente so o client "Aplicativo da Web").
+  # Vazio = login com Google desativado (POST /api/auth/google responde 503).
+  google:
+    client-ids: ${GOOGLE_CLIENT_IDS:}
 
 app:
   cors:

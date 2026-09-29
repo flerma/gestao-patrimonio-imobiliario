@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.techup.gestao_patrimonio_imobiliario.core.auth.CredenciaisInvalidasException;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.EmailJaCadastradoException;
+import com.techup.gestao_patrimonio_imobiliario.core.auth.LoginGoogleIndisponivelException;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.SenhasNaoConferemException;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.TelefoneJaCadastradoException;
 
@@ -43,6 +44,12 @@ public class AuthExceptionHandler {
     @ExceptionHandler(CredenciaisInvalidasException.class)
     public ResponseEntity<ErroResponse> handleCredenciaisInvalidas(CredenciaisInvalidasException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErroResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(LoginGoogleIndisponivelException.class)
+    public ResponseEntity<ErroResponse> handleLoginGoogleIndisponivel(LoginGoogleIndisponivelException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(new ErroResponse(ex.getMessage()));
     }
 
