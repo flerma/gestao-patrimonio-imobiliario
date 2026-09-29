@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -95,6 +96,8 @@ public class ContratoService {
         validarPercentualReajuste(request);
         ContratoEntity existente = buscarContratoEntity(id);
         ImovelEntity imovelAnterior = existente.getImovel();
+        LocalDate dataPrimeiraParcelaAnterior = existente.getDataPrimeiraParcela();
+        BigDecimal valorPrimeiraParcelaAnterior = existente.getValorPrimeiraParcela();
         ImovelEntity imovelEntity = buscarImovelEntity(request.getImovelId());
         InquilinoEntity inquilinoEntity = buscarInquilinoEntity(request.getInquilinoId());
         existente.setImovel(imovelEntity);
@@ -132,6 +135,11 @@ public class ContratoService {
         if (request.getAtualizarValorParcelas() != null) {
             pagamentoAluguelService.atualizarValorParcelas(salvo, request.getAtualizarValorParcelas());
         }
+        // Por ultimo, para prevalecer sobre os ajustes em massa acima.
+        if (!Objects.equals(dataPrimeiraParcelaAnterior, salvo.getDataPrimeiraParcela())
+                || !mesmoValor(valorPrimeiraParcelaAnterior, salvo.getValorPrimeiraParcela())) {
+            pagamentoAluguelService.sincronizarPrimeiraParcela(salvo);
+        }
         return ContratoMapper.toDomain(salvo);
     }
 
@@ -143,6 +151,11 @@ public class ContratoService {
         if (imovel != null) {
             liberarImovelSeSemContratoAtivo(imovel, id);
         }
+    }
+
+    /** Compara valores monetarios ignorando a escala (10.0 == 10.00); null so e igual a null. */
+    private static boolean mesmoValor(BigDecimal a, BigDecimal b) {
+        return a == null ? b == null : b != null && a.compareTo(b) == 0;
     }
 
     /**

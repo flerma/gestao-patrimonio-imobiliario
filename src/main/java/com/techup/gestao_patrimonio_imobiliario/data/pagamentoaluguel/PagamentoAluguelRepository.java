@@ -20,6 +20,8 @@ public interface PagamentoAluguelRepository extends JpaRepository<PagamentoAlugu
 
     List<PagamentoAluguelEntity> findAllByContratoImovelUsuarioIdOrderByDataVencimentoAsc(UUID usuarioId);
 
+    java.util.Optional<PagamentoAluguelEntity> findByContratoIdAndCompetencia(UUID contratoId, java.time.LocalDate competencia);
+
     boolean existsByContratoIdAndCompetencia(UUID contratoId, java.time.LocalDate competencia);
 
     void deleteByContratoId(UUID contratoId);

@@ -173,6 +173,30 @@ public class PagamentoAluguelService {
     }
 
     /**
+     * Reflete na primeira parcela ja existente do contrato a data e o valor da
+     * primeira parcela configurados no contrato - usado quando o usuario altera
+     * {@code dataPrimeiraParcela} e/ou {@code valorPrimeiraParcela} de um
+     * contrato existente (a geracao idempotente nao edita parcelas ja criadas).
+     * dataVencimento = dataPrimeiraParcela; valorPrevisto = valorPrimeiraParcela,
+     * ou valorAluguel quando o valor da primeira parcela nao for informado.
+     */
+    public void sincronizarPrimeiraParcela(ContratoEntity contrato) {
+        if (contrato.getDataInicio() == null || contrato.getDataPrimeiraParcela() == null) {
+            return;
+        }
+        pagamentoAluguelRepository
+                .findByContratoIdAndCompetencia(contrato.getId(), competenciaInicialEfetiva(contrato).atDay(1))
+                .ifPresent(primeira -> {
+                    primeira.setDataVencimento(contrato.getDataPrimeiraParcela());
+                    primeira.setValorPrevisto(contrato.getValorPrimeiraParcela() != null
+                            ? contrato.getValorPrimeiraParcela()
+                            : contrato.getValorAluguel());
+                    primeira.setDataAtualizacao(LocalDateTime.now());
+                    pagamentoAluguelRepository.save(primeira);
+                });
+    }
+
+    /**
      * Reconcilia a serie de cobrancas apos uma alteracao na vigencia do
      * contrato (dataInicio/dataFim):
      * <ul>
