@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface RefreshTokenRepository extends JpaRepository<RefreshTokenEntity, UUID> {
 
     Optional<RefreshTokenEntity> findByTokenHash(String tokenHash);
+
+    void deleteByUsuarioId(UUID usuarioId);
 }

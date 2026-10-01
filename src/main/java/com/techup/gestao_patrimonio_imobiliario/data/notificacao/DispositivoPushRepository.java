@@ -13,4 +13,6 @@ public interface DispositivoPushRepository extends JpaRepository<DispositivoPush
     List<DispositivoPushEntity> findByAtivoTrue();
 
     boolean existsByExpoPushToken(String expoPushToken);
+
+    void deleteByUsuarioId(UUID usuarioId);
 }

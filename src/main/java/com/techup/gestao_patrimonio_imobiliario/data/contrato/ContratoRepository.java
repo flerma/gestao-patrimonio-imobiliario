@@ -14,5 +14,7 @@ public interface ContratoRepository extends JpaRepository<ContratoEntity, UUID> 
 
     List<ContratoEntity> findAllByImovelUsuarioId(UUID usuarioId);
 
+    List<ContratoEntity> findAllByInquilinoUsuarioId(UUID usuarioId);
+
     Optional<ContratoEntity> findByIdAndImovelUsuarioId(UUID id, UUID usuarioId);
 }

@@ -1,7 +1,9 @@
 package com.techup.gestao_patrimonio_imobiliario.core.usuario;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.techup.gestao_patrimonio_imobiliario.api.usuario.UsuarioRequest;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusUsuario;
+import com.techup.gestao_patrimonio_imobiliario.data.auth.RefreshTokenRepository;
+import com.techup.gestao_patrimonio_imobiliario.data.contrato.ContratoEntity;
+import com.techup.gestao_patrimonio_imobiliario.data.contrato.ContratoRepository;
+import com.techup.gestao_patrimonio_imobiliario.data.imovel.ImovelRepository;
+import com.techup.gestao_patrimonio_imobiliario.data.inquilino.InquilinoRepository;
+import com.techup.gestao_patrimonio_imobiliario.data.notificacao.DispositivoPushRepository;
+import com.techup.gestao_patrimonio_imobiliario.data.pagamentoaluguel.PagamentoAluguelRepository;
 import com.techup.gestao_patrimonio_imobiliario.data.usuario.UsuarioEntity;
 import com.techup.gestao_patrimonio_imobiliario.data.usuario.UsuarioRepository;
 import com.techup.gestao_patrimonio_imobiliario.data.usuario.UsuarioMapper;
@@ -20,9 +29,27 @@ import com.techup.gestao_patrimonio_imobiliario.data.usuario.UsuarioMapper;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final DispositivoPushRepository dispositivoPushRepository;
+    private final ImovelRepository imovelRepository;
+    private final InquilinoRepository inquilinoRepository;
+    private final ContratoRepository contratoRepository;
+    private final PagamentoAluguelRepository pagamentoAluguelRepository;
 
-    public UsuarioService(UsuarioRepository usuarioRepository) {
+    public UsuarioService(UsuarioRepository usuarioRepository,
+                          RefreshTokenRepository refreshTokenRepository,
+                          DispositivoPushRepository dispositivoPushRepository,
+                          ImovelRepository imovelRepository,
+                          InquilinoRepository inquilinoRepository,
+                          ContratoRepository contratoRepository,
+                          PagamentoAluguelRepository pagamentoAluguelRepository) {
         this.usuarioRepository = usuarioRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.dispositivoPushRepository = dispositivoPushRepository;
+        this.imovelRepository = imovelRepository;
+        this.inquilinoRepository = inquilinoRepository;
+        this.contratoRepository = contratoRepository;
+        this.pagamentoAluguelRepository = pagamentoAluguelRepository;
     }
 
     public Usuario criar(UsuarioRequest request) {
@@ -76,6 +103,30 @@ public class UsuarioService {
         if (!usuarioRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontrado: " + id);
         }
+        excluirDadosDoUsuario(id);
         usuarioRepository.deleteById(id);
+    }
+
+    /**
+     * Exclusao em cascata de tudo o que pertence ao usuario, na ordem exigida
+     * pelas chaves estrangeiras: alugueis (pagamentos) -> contratos -> imoveis
+     * e inquilinos -> sessoes (refresh tokens) e aparelhos de push. Tudo na
+     * mesma transacao do deletar: se algo falhar, nada e apagado.
+     */
+    private void excluirDadosDoUsuario(UUID usuarioId) {
+        // Contratos dos imoveis do usuario e, por garantia, os dos inquilinos
+        // dele (normalmente o mesmo conjunto, ja que os dados sao isolados por usuario).
+        Set<ContratoEntity> contratos = new LinkedHashSet<>(contratoRepository.findAllByImovelUsuarioId(usuarioId));
+        contratos.addAll(contratoRepository.findAllByInquilinoUsuarioId(usuarioId));
+        contratos.forEach(contrato -> pagamentoAluguelRepository.deleteByContratoId(contrato.getId()));
+        pagamentoAluguelRepository.flush();
+        contratoRepository.deleteAll(contratos);
+        contratoRepository.flush();
+
+        imovelRepository.deleteAll(imovelRepository.findAllByUsuarioId(usuarioId));
+        inquilinoRepository.deleteAll(inquilinoRepository.findAllByUsuarioId(usuarioId));
+        refreshTokenRepository.deleteByUsuarioId(usuarioId);
+        dispositivoPushRepository.deleteByUsuarioId(usuarioId);
+        imovelRepository.flush();
     }
 }
