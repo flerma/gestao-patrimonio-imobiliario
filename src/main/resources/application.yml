@@ -53,7 +53,7 @@ security:
   # separados por virgula (normalmente so o client "Aplicativo da Web").
   # Vazio = login com Google desativado (POST /api/auth/google responde 503).
   google:
-    client-ids: ${GOOGLE_CLIENT_IDS:}
+    client-ids: ${GOOGLE_CLIENT_IDS:435511220295-5ku76179fqc3j90id3h27k5sptjhd69n.apps.googleusercontent.com}
 
 app:
   cors:
