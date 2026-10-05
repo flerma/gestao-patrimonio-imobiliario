@@ -5,9 +5,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.techup.gestao_patrimonio_imobiliario.core.auth.CodigoInvalidoException;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.CredenciaisInvalidasException;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.EmailJaCadastradoException;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.LoginGoogleIndisponivelException;
+import com.techup.gestao_patrimonio_imobiliario.core.auth.ReenvioCodigoMuitoRapidoException;
+import com.techup.gestao_patrimonio_imobiliario.core.email.EnvioEmailException;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.SenhasNaoConferemException;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.TelefoneJaCadastradoException;
 
@@ -49,6 +52,24 @@ public class AuthExceptionHandler {
 
     @ExceptionHandler(LoginGoogleIndisponivelException.class)
     public ResponseEntity<ErroResponse> handleLoginGoogleIndisponivel(LoginGoogleIndisponivelException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(new ErroResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(CodigoInvalidoException.class)
+    public ResponseEntity<CampoErroResponse> handleCodigoInvalido(CodigoInvalidoException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new CampoErroResponse("codigo", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ReenvioCodigoMuitoRapidoException.class)
+    public ResponseEntity<ErroResponse> handleReenvioMuitoRapido(ReenvioCodigoMuitoRapidoException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(new ErroResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(EnvioEmailException.class)
+    public ResponseEntity<ErroResponse> handleEnvioEmail(EnvioEmailException ex) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(new ErroResponse(ex.getMessage()));
     }

@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Segredos locais/servidor (ex.: MAIL_PASSWORD) ###
+.env

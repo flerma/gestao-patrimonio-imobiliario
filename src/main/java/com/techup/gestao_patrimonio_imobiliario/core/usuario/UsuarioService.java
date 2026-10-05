@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.techup.gestao_patrimonio_imobiliario.api.usuario.UsuarioRequest;
 import com.techup.gestao_patrimonio_imobiliario.core.enums.StatusUsuario;
+import com.techup.gestao_patrimonio_imobiliario.data.auth.CodigoRedefinicaoSenhaRepository;
 import com.techup.gestao_patrimonio_imobiliario.data.auth.RefreshTokenRepository;
 import com.techup.gestao_patrimonio_imobiliario.data.contrato.ContratoEntity;
 import com.techup.gestao_patrimonio_imobiliario.data.contrato.ContratoRepository;
@@ -30,6 +31,7 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final CodigoRedefinicaoSenhaRepository codigoRedefinicaoSenhaRepository;
     private final DispositivoPushRepository dispositivoPushRepository;
     private final ImovelRepository imovelRepository;
     private final InquilinoRepository inquilinoRepository;
@@ -38,6 +40,7 @@ public class UsuarioService {
 
     public UsuarioService(UsuarioRepository usuarioRepository,
                           RefreshTokenRepository refreshTokenRepository,
+                          CodigoRedefinicaoSenhaRepository codigoRedefinicaoSenhaRepository,
                           DispositivoPushRepository dispositivoPushRepository,
                           ImovelRepository imovelRepository,
                           InquilinoRepository inquilinoRepository,
@@ -45,6 +48,7 @@ public class UsuarioService {
                           PagamentoAluguelRepository pagamentoAluguelRepository) {
         this.usuarioRepository = usuarioRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.codigoRedefinicaoSenhaRepository = codigoRedefinicaoSenhaRepository;
         this.dispositivoPushRepository = dispositivoPushRepository;
         this.imovelRepository = imovelRepository;
         this.inquilinoRepository = inquilinoRepository;
@@ -126,6 +130,7 @@ public class UsuarioService {
         imovelRepository.deleteAll(imovelRepository.findAllByUsuarioId(usuarioId));
         inquilinoRepository.deleteAll(inquilinoRepository.findAllByUsuarioId(usuarioId));
         refreshTokenRepository.deleteByUsuarioId(usuarioId);
+        codigoRedefinicaoSenhaRepository.deleteByUsuarioId(usuarioId);
         dispositivoPushRepository.deleteByUsuarioId(usuarioId);
         imovelRepository.flush();
     }

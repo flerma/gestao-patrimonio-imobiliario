@@ -34,6 +34,15 @@ services:
       SPRING_DATASOURCE_PASSWORD: gestao_patrimonio
       JWT_SECRET: "PqYY929/jP02tH95FWJ0G+zv4l1m7uuLTitSzYB5CTlLm5lNloj+GZqE99sX21pY"
       GOOGLE_CLIENT_IDS: "435511220295-5ku76179fqc3j90id3h27k5sptjhd69n.apps.googleusercontent.com"
+      # SMTP do "Esqueceu a sua senha?" - Gmail gestaoseupatrimonio@gmail.com.
+      # A senha de app (MAIL_PASSWORD) NAO fica aqui: vai no arquivo .env ao lado
+      # deste compose.yaml no servidor (lido automaticamente pelo docker compose,
+      # ignorado pelo git).
+      MAIL_HOST: "${MAIL_HOST:-smtp.gmail.com}"
+      MAIL_PORT: "${MAIL_PORT:-587}"
+      MAIL_USERNAME: "${MAIL_USERNAME:-gestaoseupatrimonio@gmail.com}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD:-fieyuwguneyzhpra}"
+      MAIL_FROM: "${MAIL_FROM:-Gestão Seu Patrimônio <gestaoseupatrimonio@gmail.com>}"
       CORS_ALLOWED_ORIGINS: "http://localhost:3000,https://gestao-patrimonio-frontend.vercel.app,https://www.gestaoseupatrimonio.com.br,https://gestaoseupatrimonio.com.br"
 
     ports:

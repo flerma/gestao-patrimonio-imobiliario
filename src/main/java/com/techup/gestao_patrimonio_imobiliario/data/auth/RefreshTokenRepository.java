@@ -1,5 +1,6 @@
 package com.techup.gestao_patrimonio_imobiliario.data.auth;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -10,4 +11,6 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshTokenEntity
     Optional<RefreshTokenEntity> findByTokenHash(String tokenHash);
 
     void deleteByUsuarioId(UUID usuarioId);
+
+    List<RefreshTokenEntity> findByUsuarioIdAndRevogadoFalse(UUID usuarioId);
 }

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.techup.gestao_patrimonio_imobiliario.api.usuario.UsuarioResponse;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.AuthService;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.JwtService;
+import com.techup.gestao_patrimonio_imobiliario.core.auth.RedefinicaoSenhaService;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.TokenPair;
 import com.techup.gestao_patrimonio_imobiliario.core.usuario.Usuario;
 
@@ -28,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
     private final AuthService authService;
+    private final RedefinicaoSenhaService redefinicaoSenhaService;
     private final JwtService jwtService;
 
     @PostMapping("/login")
@@ -67,6 +69,30 @@ public class AuthController {
                 request.getSenha(),
                 request.getConfirmarSenha());
         return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioResponse.from(usuario));
+    }
+
+    @PostMapping("/esqueci-senha")
+    @Operation(summary = "Esqueci a senha", description = "Envia ao e-mail informado um código de 6 dígitos, válido por 30 minutos, para redefinir a senha. Também usado para reenviar o código (o novo invalida o anterior). Responde 204 mesmo para e-mail não cadastrado.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Solicitação aceita"),
+            @ApiResponse(responseCode = "429", description = "Novo código pedido cedo demais", content = @Content),
+            @ApiResponse(responseCode = "503", description = "Falha ao enviar o e-mail", content = @Content)
+    })
+    public ResponseEntity<Void> esqueciSenha(@Valid @RequestBody EsqueciSenhaRequest request) {
+        redefinicaoSenhaService.solicitarCodigo(request.getEmail());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/redefinir-senha")
+    @Operation(summary = "Redefinir senha", description = "Valida o código recebido por e-mail e substitui a senha. Revoga as sessões abertas do usuário.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Senha atualizada"),
+            @ApiResponse(responseCode = "400", description = "Código inválido/expirado (campo \"codigo\"), senhas diferentes ou senha fora dos critérios", content = @Content)
+    })
+    public ResponseEntity<Void> redefinirSenha(@Valid @RequestBody RedefinirSenhaRequest request) {
+        redefinicaoSenhaService.redefinirSenha(
+                request.getEmail(), request.getCodigo(), request.getNovaSenha(), request.getConfirmarSenha());
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/refresh")
