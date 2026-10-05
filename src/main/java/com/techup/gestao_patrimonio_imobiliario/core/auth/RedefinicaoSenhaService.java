@@ -7,7 +7,6 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Base64;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,8 +28,8 @@ import com.techup.gestao_patrimonio_imobiliario.data.usuario.UsuarioRepository;
  * <ul>
  *   <li>Guarda so o hash do codigo; cada novo envio invalida os anteriores -
  *       vale sempre o ultimo codigo enviado.</li>
- *   <li>E-mail nao cadastrado: responde igual (sem enviar nada), para nao
- *       revelar quais e-mails existem.</li>
+ *   <li>E-mail nao cadastrado: recusado com {@link EmailNaoCadastradoException}
+ *       (decisao do produto: o usuario e avisado de que o e-mail nao existe).</li>
  *   <li>Protecoes: intervalo minimo entre envios e limite de tentativas erradas
  *       por codigo (depois disso o codigo e descartado e e preciso reenviar).</li>
  *   <li>Ao trocar a senha, todas as sessoes (refresh tokens) do usuario sao
@@ -66,11 +65,8 @@ public class RedefinicaoSenhaService {
 
     /** Gera, guarda e envia um novo codigo (usado tanto no primeiro envio quanto no "Reenviar codigo"). */
     public void solicitarCodigo(String email) {
-        Optional<UsuarioEntity> encontrado = usuarioRepository.findByEmailIgnoreCase(email.trim());
-        if (encontrado.isEmpty()) {
-            return;
-        }
-        UsuarioEntity usuario = encontrado.get();
+        UsuarioEntity usuario = usuarioRepository.findByEmailIgnoreCase(email.trim())
+                .orElseThrow(() -> new EmailNaoCadastradoException("E-mail não cadastrado."));
         LocalDateTime agora = LocalDateTime.now();
 
         codigoRepository.findFirstByUsuarioIdOrderByDataCriacaoDesc(usuario.getId()).ifPresent(ultimo -> {

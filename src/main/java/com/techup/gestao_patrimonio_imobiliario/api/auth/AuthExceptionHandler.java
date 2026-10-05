@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.CodigoInvalidoException;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.CredenciaisInvalidasException;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.EmailJaCadastradoException;
+import com.techup.gestao_patrimonio_imobiliario.core.auth.EmailNaoCadastradoException;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.LoginGoogleIndisponivelException;
 import com.techup.gestao_patrimonio_imobiliario.core.auth.ReenvioCodigoMuitoRapidoException;
 import com.techup.gestao_patrimonio_imobiliario.core.email.EnvioEmailException;
@@ -54,6 +55,12 @@ public class AuthExceptionHandler {
     public ResponseEntity<ErroResponse> handleLoginGoogleIndisponivel(LoginGoogleIndisponivelException ex) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(new ErroResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(EmailNaoCadastradoException.class)
+    public ResponseEntity<CampoErroResponse> handleEmailNaoCadastrado(EmailNaoCadastradoException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new CampoErroResponse("email", ex.getMessage()));
     }
 
     @ExceptionHandler(CodigoInvalidoException.class)

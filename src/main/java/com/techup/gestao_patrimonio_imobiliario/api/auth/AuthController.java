@@ -72,9 +72,10 @@ public class AuthController {
     }
 
     @PostMapping("/esqueci-senha")
-    @Operation(summary = "Esqueci a senha", description = "Envia ao e-mail informado um código de 6 dígitos, válido por 30 minutos, para redefinir a senha. Também usado para reenviar o código (o novo invalida o anterior). Responde 204 mesmo para e-mail não cadastrado.")
+    @Operation(summary = "Esqueci a senha", description = "Envia ao e-mail informado um código de 6 dígitos, válido por 30 minutos, para redefinir a senha. Também usado para reenviar o código (o novo invalida o anterior).")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Solicitação aceita"),
+            @ApiResponse(responseCode = "204", description = "Código enviado"),
+            @ApiResponse(responseCode = "404", description = "E-mail não cadastrado (campo \"email\")", content = @Content),
             @ApiResponse(responseCode = "429", description = "Novo código pedido cedo demais", content = @Content),
             @ApiResponse(responseCode = "503", description = "Falha ao enviar o e-mail", content = @Content)
     })
