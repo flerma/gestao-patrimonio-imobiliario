@@ -76,3 +76,11 @@ app:
     remetente: ${MAIL_FROM:}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+
+# Falha de SMTP (ou SMTP nao configurado, como no ambiente local) nao deve
+# marcar a aplicacao inteira como DOWN no /actuator/health: o e-mail so e usado
+# no "Esqueceu a sua senha?" e o erro ja e tratado na hora do envio.
+management:
+  health:
+    mail:
+      enabled: false

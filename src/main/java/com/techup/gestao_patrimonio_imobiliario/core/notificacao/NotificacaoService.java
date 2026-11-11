@@ -1,6 +1,10 @@
 package com.techup.gestao_patrimonio_imobiliario.core.notificacao;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,11 +21,14 @@ import org.springframework.web.server.ResponseStatusException;
 import com.techup.gestao_patrimonio_imobiliario.api.notificacao.RegistrarDispositivoRequest;
 import com.techup.gestao_patrimonio_imobiliario.core.alerta.Alerta;
 import com.techup.gestao_patrimonio_imobiliario.core.alerta.AlertaService;
+import com.techup.gestao_patrimonio_imobiliario.core.alerta.AlertaService.ReajusteDoMes;
 import com.techup.gestao_patrimonio_imobiliario.core.alerta.SeveridadeAlerta;
 import com.techup.gestao_patrimonio_imobiliario.core.notificacao.ExpoPushClient.Mensagem;
 import com.techup.gestao_patrimonio_imobiliario.core.notificacao.ExpoPushClient.Ticket;
 import com.techup.gestao_patrimonio_imobiliario.data.notificacao.DispositivoPushEntity;
 import com.techup.gestao_patrimonio_imobiliario.data.notificacao.DispositivoPushRepository;
+import com.techup.gestao_patrimonio_imobiliario.data.notificacao.NotificacaoEnviadaEntity;
+import com.techup.gestao_patrimonio_imobiliario.data.notificacao.NotificacaoEnviadaRepository;
 
 @Service
 @Transactional
@@ -30,14 +37,20 @@ public class NotificacaoService {
     private static final Logger log = LoggerFactory.getLogger(NotificacaoService.class);
     private static final String TITULO = "Patrimonio Imobiliario";
 
+    private static final ZoneId ZONA = ZoneId.of("America/Sao_Paulo");
+    private static final DateTimeFormatter DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
     private final DispositivoPushRepository dispositivoPushRepository;
+    private final NotificacaoEnviadaRepository notificacaoEnviadaRepository;
     private final AlertaService alertaService;
     private final ExpoPushClient expoPushClient;
 
     public NotificacaoService(DispositivoPushRepository dispositivoPushRepository,
+                              NotificacaoEnviadaRepository notificacaoEnviadaRepository,
                               AlertaService alertaService,
                               ExpoPushClient expoPushClient) {
         this.dispositivoPushRepository = dispositivoPushRepository;
+        this.notificacaoEnviadaRepository = notificacaoEnviadaRepository;
         this.alertaService = alertaService;
         this.expoPushClient = expoPushClient;
     }
@@ -122,6 +135,71 @@ public class NotificacaoService {
         List<Ticket> tickets = expoPushClient.enviar(mensagens);
         int falhas = tratarTickets(mensagens, tickets);
         return new ResultadoEnvio(dispositivos.size(), mensagens.size() - falhas, falhas, detalhes);
+    }
+
+    /**
+     * Push dedicado para cada contrato que atinge o periodo de reajuste no mes
+     * corrente (completa 12, 24, 36... meses de vigencia). Enviado uma unica vez
+     * por contrato e ciclo: o envio so e registrado quando ao menos um aparelho
+     * do proprietario recebe, assim quem ativar as notificacoes depois ainda
+     * recebe o aviso dentro do mes.
+     */
+    public ResultadoEnvio enviarAvisosDeReajuste() {
+        LocalDate hoje = LocalDate.now(ZONA);
+        List<ReajusteDoMes> reajustes = alertaService.listarReajustesDoMes(hoje);
+        if (reajustes.isEmpty()) {
+            return new ResultadoEnvio(0, 0, 0, List.of("Nenhum reajuste no mes."));
+        }
+
+        Map<UUID, List<DispositivoPushEntity>> porUsuario = new HashMap<>();
+        for (DispositivoPushEntity d : dispositivoPushRepository.findByAtivoTrue()) {
+            if (d.getUsuarioId() != null) {
+                porUsuario.computeIfAbsent(d.getUsuarioId(), k -> new ArrayList<>()).add(d);
+            }
+        }
+
+        int dispositivos = 0;
+        int enviadas = 0;
+        int falhas = 0;
+        List<String> detalhes = new ArrayList<>();
+        for (ReajusteDoMes reajuste : reajustes) {
+            String chave = "reajuste-" + reajuste.contratoId() + "-" + YearMonth.from(reajuste.data());
+            if (notificacaoEnviadaRepository.existsByChave(chave)) {
+                continue;
+            }
+            List<DispositivoPushEntity> aparelhos = porUsuario.getOrDefault(reajuste.usuarioId(), List.of());
+            if (aparelhos.isEmpty()) {
+                detalhes.add(chave + ": proprietario sem aparelho registrado");
+                continue;
+            }
+            String indice = reajuste.indice() != null ? " pelo indice " + reajuste.indice().name() : "";
+            String corpo = reajuste.nomeImovel() + ": o contrato completa " + reajuste.meses()
+                    + " meses de vigencia em " + reajuste.data().format(DATA)
+                    + ". Aplique o reajuste" + indice + ".";
+            Map<String, Object> data = new HashMap<>();
+            data.put("tipo", "reajuste");
+            data.put("contratoId", reajuste.contratoId().toString());
+            data.put("href", "/contratos/" + reajuste.contratoId());
+
+            List<Mensagem> mensagens = aparelhos.stream()
+                    .map(d -> Mensagem.alerta(d.getExpoPushToken(), "Reajuste do aluguel", corpo, data))
+                    .toList();
+            List<Ticket> tickets = expoPushClient.enviar(mensagens);
+            int falhasContrato = tratarTickets(mensagens, tickets);
+            dispositivos += aparelhos.size();
+            enviadas += mensagens.size() - falhasContrato;
+            falhas += falhasContrato;
+            if (falhasContrato < mensagens.size()) {
+                notificacaoEnviadaRepository.save(NotificacaoEnviadaEntity.builder()
+                        .id(UUID.randomUUID())
+                        .chave(chave)
+                        .usuarioId(reajuste.usuarioId())
+                        .dataEnvio(LocalDateTime.now())
+                        .build());
+            }
+            detalhes.add(chave + ": " + (mensagens.size() - falhasContrato) + "/" + mensagens.size() + " enviada(s)");
+        }
+        return new ResultadoEnvio(dispositivos, enviadas, falhas, detalhes);
     }
 
     private String resumo(List<Alerta> alertas) {

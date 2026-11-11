@@ -45,6 +45,14 @@ public class NotificacaoController {
         return notificacaoService.enviarResumoDeAlertas();
     }
 
+    @PostMapping("/enviar-reajustes")
+    @Operation(summary = "Enviar avisos de reajuste agora",
+            description = "Envia o push de reajuste para os contratos que atingem o periodo de reajuste no mes "
+                    + "(uma vez por contrato e ciclo; ja enviados sao ignorados).")
+    public ResultadoEnvio enviarReajustes() {
+        return notificacaoService.enviarAvisosDeReajuste();
+    }
+
     @PostMapping("/testar")
     @Operation(summary = "Enviar push de teste", description = "Envia uma notificacao fixa de teste para um token registrado.")
     public ResultadoEnvio testar(@RequestParam("token") String token) {

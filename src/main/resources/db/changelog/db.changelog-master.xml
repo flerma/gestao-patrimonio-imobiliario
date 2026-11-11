@@ -20,5 +20,6 @@
     <include file="db/changelog/014-add-valor-primeira-parcela-to-contratos.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/015-add-data-aquisicao-to-imoveis.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/016-create-table-codigos-redefinicao-senha.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/017-create-table-notificacoes-enviadas.sql" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

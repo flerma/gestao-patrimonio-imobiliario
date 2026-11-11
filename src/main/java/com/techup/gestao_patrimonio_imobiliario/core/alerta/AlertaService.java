@@ -1,7 +1,9 @@
 package com.techup.gestao_patrimonio_imobiliario.core.alerta;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -100,21 +102,25 @@ public class AlertaService {
                 }
             }
 
-            LocalDate inicio = contrato.getDataInicio();
-            Integer periodo = contrato.getPeriodoReajuste();
-            IndiceReajuste indice = contrato.getIndiceReajuste();
-            if (inicio != null && periodo != null && periodo > 0
-                    && indice != null && indice != IndiceReajuste.SEM_REAJUSTE) {
-                LocalDate proximoReajuste = inicio;
-                while (!proximoReajuste.isAfter(hoje)) {
-                    proximoReajuste = proximoReajuste.plusMonths(periodo);
-                }
-                if (!proximoReajuste.isAfter(em30Dias)) {
+            Reajuste reajuste = calcularReajuste(contrato, hoje);
+            if (reajuste != null) {
+                String indice = contrato.getIndiceReajuste() != null
+                        ? " pelo indice " + contrato.getIndiceReajuste().name()
+                        : "";
+                if (reajuste.noMesAtual()) {
+                    alertas.add(new Alerta(
+                            "reajuste-" + contrato.getId(),
+                            SeveridadeAlerta.WARNING,
+                            "Reajuste do aluguel - " + nomeImovel,
+                            "O contrato completa " + reajuste.meses() + " meses de vigencia em "
+                                    + reajuste.data().format(DATA) + ". Aplique o reajuste" + indice + "."));
+                } else if (!reajuste.data().isAfter(em30Dias)) {
                     alertas.add(new Alerta(
                             "reajuste-" + contrato.getId(),
                             SeveridadeAlerta.INFO,
                             "Reajuste previsto - " + nomeImovel,
-                            "Reajuste (" + indice.name() + ") em " + proximoReajuste.format(DATA) + "."));
+                            "O contrato completara " + reajuste.meses() + " meses de vigencia em "
+                                    + reajuste.data().format(DATA) + ". Reajuste" + indice + "."));
                 }
             }
         }
@@ -147,5 +153,65 @@ public class AlertaService {
             case INFO -> 2;
         }));
         return alertas;
+    }
+
+    /**
+     * Contratos ativos cujo reajuste cai no mes corrente (completam 12, 24, 36...
+     * meses de vigencia, conforme o periodo de reajuste). Usado pelo push de reajuste.
+     */
+    public List<ReajusteDoMes> listarReajustesDoMes(LocalDate hoje) {
+        List<ReajusteDoMes> resultado = new ArrayList<>();
+        for (ContratoEntity contrato : contratoRepository.findAll()) {
+            if (contrato.getStatus() != StatusContrato.ATIVO || contrato.getImovel() == null
+                    || contrato.getImovel().getUsuario() == null) {
+                continue;
+            }
+            Reajuste reajuste = calcularReajuste(contrato, hoje);
+            if (reajuste != null && reajuste.noMesAtual()) {
+                resultado.add(new ReajusteDoMes(
+                        contrato.getId(),
+                        contrato.getImovel().getUsuario().getId(),
+                        contrato.getImovel().getNome(),
+                        contrato.getIndiceReajuste(),
+                        reajuste.data(),
+                        reajuste.meses()));
+            }
+        }
+        return resultado;
+    }
+
+    /**
+     * Reajuste a cada {@code periodoReajuste} meses contados de {@code dataInicio}:
+     * o do mes corrente (se o contrato completa um multiplo do periodo neste mes)
+     * ou, senao, o proximo. {@code null} se o contrato nao reajusta ou se o
+     * proximo reajuste cai depois do fim do contrato.
+     */
+    static Reajuste calcularReajuste(ContratoEntity contrato, LocalDate hoje) {
+        LocalDate inicio = contrato.getDataInicio();
+        Integer periodo = contrato.getPeriodoReajuste();
+        if (inicio == null || periodo == null || periodo <= 0
+                || contrato.getIndiceReajuste() == IndiceReajuste.SEM_REAJUSTE) {
+            return null;
+        }
+        long decorridos = ChronoUnit.MONTHS.between(YearMonth.from(inicio), YearMonth.from(hoje));
+        boolean noMesAtual = decorridos > 0 && decorridos % periodo == 0;
+        long meses = noMesAtual ? decorridos : (Math.max(decorridos, 0) / periodo + 1) * periodo;
+        LocalDate data = inicio.plusMonths(meses); // plusMonths ja limita ao ultimo dia do mes
+        if (contrato.getDataFim() != null && data.isAfter(contrato.getDataFim())) {
+            return null;
+        }
+        return new Reajuste(data, meses, noMesAtual);
+    }
+
+    record Reajuste(LocalDate data, long meses, boolean noMesAtual) {
+    }
+
+    public record ReajusteDoMes(
+            UUID contratoId,
+            UUID usuarioId,
+            String nomeImovel,
+            IndiceReajuste indice,
+            LocalDate data,
+            long meses) {
     }
 }

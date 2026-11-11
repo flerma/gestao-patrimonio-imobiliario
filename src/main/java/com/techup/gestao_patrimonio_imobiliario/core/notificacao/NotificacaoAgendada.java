@@ -27,5 +27,14 @@ public class NotificacaoAgendada {
         ResultadoEnvio resultado = notificacaoService.enviarResumoDeAlertas();
         log.info("Resumo diario de alertas: {} aparelho(s), {} enviada(s), {} falha(s)",
                 resultado.dispositivos(), resultado.mensagensEnviadas(), resultado.falhas());
+
+        try {
+            ResultadoEnvio reajustes = notificacaoService.enviarAvisosDeReajuste();
+            log.info("Avisos de reajuste: {} aparelho(s), {} enviada(s), {} falha(s) {}",
+                    reajustes.dispositivos(), reajustes.mensagensEnviadas(), reajustes.falhas(),
+                    reajustes.detalhes());
+        } catch (RuntimeException e) {
+            log.error("Falha ao enviar avisos de reajuste", e);
+        }
     }
 }
